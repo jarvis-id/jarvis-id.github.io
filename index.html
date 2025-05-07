@@ -1,95 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>TikTok Viewer - GitHub Pages</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        #results { margin-top: 20px; }
-        .video-container { margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; }
-    </style>
+  <title>TikTok Viewer</title>
 </head>
 <body>
-    <h1>TikTok Viewer</h1>
-    
-    <div>
-        <input type="text" id="username" placeholder="Masukkan username TikTok (tanpa @)">
-        <button onclick="fetchProfile()">Cari Profil</button>
-    </div>
-    
-    <div>
-        <input type="text" id="videoUrl" placeholder="Masukkan URL video TikTok">
-        <button onclick="fetchVideo()">Cari Video</button>
-    </div>
-    
-    <div id="results"></div>
-    
-    <script>
-        // Gunakan API proxy publik (perhatikan rate limit)
-        async function fetchProfile() {
-            const username = document.getElementById('username').value.trim();
-            if (!username) return;
-            
-            try {
-                const response = await fetch(`https://tiktok-api.vercel.app/@${username}`);
-                const data = await response.json();
-                
-                let html = `
-                    <div class="profile">
-                        <h2>${data.user.nickname} (@${data.user.uniqueId})</h2>
-                        <img src="${data.user.avatarLarger}" width="100">
-                        <p>${data.user.signature}</p>
-                        <p>Pengikut: ${data.stats.followerCount} | Mengikuti: ${data.stats.followingCount}</p>
-                    </div>
-                    <h3>Video Terbaru:</h3>
-                    <div class="videos">
-                `;
-                
-                data.videos.forEach(video => {
-                    html += `
-                        <div class="video-container">
-                            <p>${video.desc}</p>
-                            <video width="300" controls>
-                                <source src="${video.playAddr}" type="video/mp4">
-                            </video>
-                        </div>
-                    `;
-                });
-                
-                document.getElementById('results').innerHTML = html + '</div>';
-            } catch (error) {
-                document.getElementById('results').innerHTML = `Error: ${error.message}`;
-            }
-        }
-        
-        async function fetchVideo() {
-            const videoUrl = document.getElementById('videoUrl').value.trim();
-            if (!videoUrl.includes('tiktok.com')) return;
-            
-            try {
-                // Gunakan oEmbed untuk info dasar
-                const oembed = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(videoUrl)}`);
-                const oembedData = await oembed.json();
-                
-                // Untuk video, kita bisa menggunakan iframe embed
-                const videoId = videoUrl.split('/video/')[1].split('?')[0];
-                
-                document.getElementById('results').innerHTML = `
-                    <div class="video-container">
-                        <h2>${oembedData.author_name}</h2>
-                        <p>${oembedData.title}</p>
-                        <iframe 
-                            width="325" 
-                            height="580" 
-                            src="https://www.tiktok.com/embed/v2/${videoId}" 
-                            frameborder="0" 
-                            allowfullscreen>
-                        </iframe>
-                    </div>
-                `;
-            } catch (error) {
-                document.getElementById('results').innerHTML = `Error: ${error.message}`;
-            }
-        }
-    </script>
+  <h1>TikTok Viewer</h1>
+  
+  <div>
+    <input type="text" id="videoUrl" placeholder="Paste TikTok video URL">
+    <button onclick="embedVideo()">Embed Video</button>
+  </div>
+  
+  <div id="videoContainer"></div>
+  
+  <script>
+    function embedVideo() {
+      const url = document.getElementById('videoUrl').value;
+      const videoId = url.split('/video/')[1]?.split('?')[0];
+      
+      if (!videoId) {
+        alert('Invalid TikTok URL');
+        return;
+      }
+      
+      document.getElementById('videoContainer').innerHTML = `
+        <iframe
+          width="325" 
+          height="580" 
+          src="https://www.tiktok.com/embed/v2/${videoId}"
+          frameborder="0"
+          allowfullscreen>
+        </iframe>
+      `;
+    }
+  </script>
 </body>
 </html>
