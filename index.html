@@ -4,168 +4,20 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TikTok LIVE Chat Reader (Stable Demo)</title>
+    <title>TikTok LIVE Chat Reader (Demo)</title>
 
-    <meta name="description" content="A stable chat reader for TikTok LIVE utilizing TikTok-Live-Connector and Socket.IO with auto-reconnect and fallback features">
-    <meta name="keywords" content="TikTok,Live,Chat,Reader,Reconnect,Stable,API">
+    <meta name="description" content="A chat reader for TikTok LIVE utilizing TikTok-Live-Connector and Socket.IO to forward the data to the client. This demo project uses the unofficial TikTok API to retrieve chat comments, gifts and other events from TikTok LIVE.">
+    <meta name="keywords" content="TikTok,Live,Livestream,Chat,Reader,Scraper,Tracker,tiktok.com,broadcast,api,library,node,node.js,javascript">
 
     <link rel="stylesheet" href="style.css">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-    <style>
-        .connection-status {
-            padding: 8px;
-            margin: 10px 0;
-            border-radius: 4px;
-            display: inline-block;
-        }
-        .status-connecting { background: #FFC107; color: black; }
-        .status-connected { background: #4CAF50; color: white; }
-        .status-disconnected { background: #F44336; color: white; }
-        .status-error { background: #9C27B0; color: white; }
-        #fallbackWarning {
-            display: none;
-            background: #FFEB3B;
-            padding: 8px;
-            margin: 10px 0;
-            border-radius: 4px;
-            color: black;
-        }
-    </style>
+    <script src="connection.js"></script>
+    <script src="app.js"></script>
 
     <script>
-        // Enhanced connection manager
-        class TikTokConnection {
-            constructor() {
-                this.socket = null;
-                this.reconnectAttempts = 0;
-                this.maxReconnectAttempts = 5;
-                this.reconnectDelay = 3000;
-                this.isUsingFallback = false;
-                this.currentUsername = null;
-                this.fallbackInterval = null;
-            }
-
-            connect(username) {
-                this.currentUsername = username;
-                this.updateStatus('Connecting...', 'status-connecting');
-                document.getElementById('fallbackWarning').style.display = 'none';
-                
-                try {
-                    // Clear any existing connection
-                    if (this.socket) this.socket.disconnect();
-                    
-                    // Initialize new connection
-                    this.socket = io({
-                        reconnectionAttempts: this.maxReconnectAttempts,
-                        reconnectionDelay: this.reconnectDelay,
-                        transports: ['websocket', 'polling']
-                    });
-
-                    this.setupSocketEvents();
-                } catch (error) {
-                    this.handleConnectionError(error);
-                }
-            }
-
-            setupSocketEvents() {
-                this.socket.on('connect', () => {
-                    this.reconnectAttempts = 0;
-                    this.isUsingFallback = false;
-                    this.updateStatus('Connected', 'status-connected');
-                    
-                    // Join the TikTok room
-                    this.socket.emit('join', this.currentUsername);
-                });
-
-                this.socket.on('chat', (data) => {
-                    if (window.displayChatMessage) {
-                        displayChatMessage(data);
-                    }
-                });
-
-                this.socket.on('gift', (data) => {
-                    if (window.displayGiftMessage) {
-                        displayGiftMessage(data);
-                    }
-                });
-
-                this.socket.on('disconnect', (reason) => {
-                    this.handleDisconnect(reason);
-                });
-
-                this.socket.on('connect_error', (error) => {
-                    this.handleConnectionError(error);
-                });
-            }
-
-            handleDisconnect(reason) {
-                console.warn(`Disconnected: ${reason}`);
-                this.updateStatus(`Disconnected (${reason})`, 'status-disconnected');
-                
-                if (!this.isUsingFallback) {
-                    setTimeout(() => this.tryReconnect(), this.reconnectDelay);
-                }
-            }
-
-            tryReconnect() {
-                if (this.reconnectAttempts < this.maxReconnectAttempts) {
-                    this.reconnectAttempts++;
-                    this.updateStatus(`Reconnecting (${this.reconnectAttempts}/${this.maxReconnectAttempts})`, 'status-connecting');
-                    this.connect(this.currentUsername);
-                } else {
-                    this.activateFallbackMode();
-                }
-            }
-
-            activateFallbackMode() {
-                this.isUsingFallback = true;
-                document.getElementById('fallbackWarning').style.display = 'block';
-                this.updateStatus('Using fallback mode', 'status-connecting');
-                
-                // Start polling
-                this.startFallbackPolling();
-            }
-
-            startFallbackPolling() {
-                this.fallbackInterval = setInterval(() => {
-                    $.get(`/api/fallback-chat?username=${this.currentUsername}`, (data) => {
-                        data.forEach(msg => {
-                            if (msg.type === 'chat' && window.displayChatMessage) {
-                                displayChatMessage(msg);
-                            } else if (msg.type === 'gift' && window.displayGiftMessage) {
-                                displayGiftMessage(msg);
-                            }
-                        });
-                    }).fail((error) => {
-                        console.error('Fallback error:', error);
-                    });
-                }, 10000); // Poll every 10 seconds
-            }
-
-            updateStatus(text, statusClass) {
-                const statusElement = document.getElementById('connectionStatus');
-                statusElement.textContent = text;
-                statusElement.className = `connection-status ${statusClass}`;
-            }
-
-            handleConnectionError(error) {
-                console.error('Connection error:', error);
-                this.updateStatus(`Error: ${error.message}`, 'status-error');
-                
-                if (this.reconnectAttempts < this.maxReconnectAttempts) {
-                    setTimeout(() => this.tryReconnect(), this.reconnectDelay);
-                } else {
-                    this.activateFallbackMode();
-                }
-            }
-        }
-
-        // Initialize connection manager
-        const tiktokConnection = new TikTokConnection();
-
         function generateOverlay() {
             let username = $('#uniqueIdInput').val();
             let url = `/obs.html?username=${username}&showLikes=1&showChats=1&showGifts=1&showFollows=1&showJoins=1&bgColor=rgb(24,23,28)&fontColor=rgb(227,229,235)&fontSize=1.3em`;
@@ -181,17 +33,24 @@
             $('#connectButton').click(function() {
                 const username = $('#uniqueIdInput').val().trim();
                 if (username) {
-                    tiktokConnection.connect(username);
+                    // Call the connection function from connection.js
+                    connectToTikTok(username);
                 } else {
                     alert("Please enter a username");
                 }
             });
         });
+
+        function connectToTikTok(username) {
+            // Initialize connection manager
+            const tiktokConnection = new TikTokConnection();
+            tiktokConnection.connect(username);
+        }
     </script>
 </head>
 <body>
     <div class="head">
-        <h1>TikTok LIVE Chat Reader (Stable)</h1>
+        <h1>TikTok LIVE Chat Reader</h1>
         <span class="subTitle">Source: <a href="https://github.com/zerodytrash/TikTok-Chat-Reader">https://github.com/zerodytrash/TikTok-Chat-Reader</a></span>      
     </div>
 
@@ -207,7 +66,7 @@
     </div>
 
     <div id="connectionStatus" class="connection-status">Ready to connect</div>
-    <div id="fallbackWarning">Warning: Using fallback mode (data may be delayed)</div>
+    <div id="fallbackWarning" style="display:none;">Warning: Using fallback mode (data may be delayed)</div>
 
     <table class="splitstatetable">
         <tr>
@@ -230,36 +89,12 @@
             </td>
             <td>
                 <div class="giftcontainer">
-                    <h3 class="containerheader">Gifts</h3>
+                    <h3 class="containerheader ">Gifts</h3>
                     <div id="giftMessages"></div>
                 </div>
             </td>
         </tr>
     </table>
-
-    <script>
-        // Chat display functions
-        function displayChatMessage(data) {
-            const chatContainer = $('.chatcontainer #chatMessages');
-            const messageElement = $(`
-                <div class="chat-message">
-                    <strong>${data.user.nickname}:</strong> ${data.comment}
-                </div>
-            `);
-            chatContainer.append(messageElement);
-            chatContainer.scrollTop(chatContainer[0].scrollHeight);
-        }
-
-        function displayGiftMessage(data) {
-            const giftContainer = $('.giftcontainer #giftMessages');
-            const giftElement = $(`
-                <div class="gift-message">
-                    <strong>${data.user.nickname}</strong> sent ${data.giftCount}x ${data.giftName}
-                </div>
-            `);
-            giftContainer.append(giftElement);
-            giftContainer.scrollTop(giftContainer[0].scrollHeight);
-        }
-    </script>
+    <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"93c035f7fdf9880b","serverTiming":{"name":{"cfExtPri":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.4.0-1-g37f21b1","token":"65f9075973884fc192143938ea377297"}' crossorigin="anonymous"></script>
 </body>
 </html>
