@@ -1,456 +1,265 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>TikTok Live Recorder (Browser Version)</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok LIVE Chat Reader (Stable Demo)</title>
+
+    <meta name="description" content="A stable chat reader for TikTok LIVE utilizing TikTok-Live-Connector and Socket.IO with auto-reconnect and fallback features">
+    <meta name="keywords" content="TikTok,Live,Chat,Reader,Reconnect,Stable,API">
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-            color: #333;
-        }
-        .banner {
-            background-color: #FE2C55;
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            margin-bottom: 20px;
-            font-family: monospace;
-        }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .input-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
+        .connection-status {
+            padding: 8px;
+            margin: 10px 0;
             border-radius: 4px;
-            font-size: 16px;
-            box-sizing: border-box;
+            display: inline-block;
         }
-        button {
-            padding: 12px 20px;
-            background-color: #FE2C55;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 10px;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #d91f46;
-        }
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        #status {
-            margin: 20px 0;
-            padding: 15px;
-            border-radius: 4px;
-            white-space: pre-wrap;
-        }
-        .log {
-            background-color: #f0f0f0;
-            font-family: monospace;
-            padding: 10px;
-            border-radius: 4px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .error {
-            color: #c62828;
-        }
-        .success {
-            color: #2e7d32;
-        }
-        #video-container {
-            margin-top: 20px;
-            position: relative;
-            padding-bottom: 56.25%;
-            height: 0;
-            overflow: hidden;
-        }
-        #video-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        .hidden {
+        .status-connecting { background: #FFC107; color: black; }
+        .status-connected { background: #4CAF50; color: white; }
+        .status-disconnected { background: #F44336; color: white; }
+        .status-error { background: #9C27B0; color: white; }
+        #fallbackWarning {
             display: none;
-        }
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-            border-radius: 4px 4px 0 0;
-        }
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            color: #333;
-            margin: 0;
-            border-radius: 0;
-        }
-        .tab button:hover {
-            background-color: #ddd;
-        }
-        .tab button.active {
-            background-color: #FE2C55;
-            color: white;
-        }
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-            border-radius: 0 0 4px 4px;
-            background: white;
+            background: #FFEB3B;
+            padding: 8px;
+            margin: 10px 0;
+            border-radius: 4px;
+            color: black;
         }
     </style>
-</head>
-<body>
-    <div class="banner">
-        <pre>
-  _______ _ _  _____ _    _      _  ______ _____  
- |__   __(_) |/ ____| |  | |    | |/ /___ \____ \ 
-    | |   _| | (___ | |__| | ___| ' /  __) |__) |
-    | |  | | |\___ \|  __  |/ _ \  &lt;  |__ &lt;|__ &lt; 
-    | |  | | |____) | |  | |  __/ . \ ___) |__) |
-    |_|  |_|_|_____/|_|  |_|\___|_|\_\____/____/ 
-                                                  
-        Browser Version for GitHub Pages
-        </pre>
-    </div>
-
-    <div class="tab">
-        <button class="tablinks active" onclick="openTab(event, 'recorder')">Recorder</button>
-        <button class="tablinks" onclick="openTab(event, 'settings')">Settings</button>
-        <button class="tablinks" onclick="openTab(event, 'logs')">Logs</button>
-    </div>
-
-    <div id="recorder" class="tabcontent" style="display: block;">
-        <div class="container">
-            <div class="input-group">
-                <label for="input-type">Input Type:</label>
-                <select id="input-type" onchange="toggleInputType()">
-                    <option value="url">Live URL</option>
-                    <option value="username">Username</option>
-                    <option value="roomid">Room ID</option>
-                </select>
-            </div>
-
-            <div class="input-group" id="url-group">
-                <label for="url">TikTok Live URL:</label>
-                <input type="text" id="url" placeholder="https://www.tiktok.com/@username/live">
-            </div>
-
-            <div class="input-group hidden" id="username-group">
-                <label for="username">TikTok Username:</label>
-                <input type="text" id="username" placeholder="username (without @)">
-            </div>
-
-            <div class="input-group hidden" id="roomid-group">
-                <label for="room_id">Room ID:</label>
-                <input type="text" id="room_id" placeholder="Live stream room ID">
-            </div>
-
-            <div class="input-group">
-                <label for="duration">Recording Duration (minutes):</label>
-                <input type="number" id="duration" placeholder="Leave empty for unlimited" min="1">
-            </div>
-
-            <button id="start-btn" onclick="startRecording()">Start Recording</button>
-            <button id="stop-btn" class="hidden" onclick="stopRecording()">Stop Recording</button>
-
-            <div id="status"></div>
-            <div id="video-container" class="hidden"></div>
-        </div>
-    </div>
-
-    <div id="settings" class="tabcontent">
-        <div class="container">
-            <div class="input-group">
-                <label for="output">Output Filename:</label>
-                <input type="text" id="output" placeholder="output.mp4">
-            </div>
-
-            <div class="input-group">
-                <label for="proxy">Proxy (optional):</label>
-                <input type="text" id="proxy" placeholder="http://proxy.example.com:8080">
-            </div>
-
-            <div class="input-group">
-                <label for="cookies">Cookies (JSON, optional):</label>
-                <textarea id="cookies" rows="4" placeholder='[{"name":"cookie1","value":"value1"},...]'></textarea>
-            </div>
-
-            <div class="input-group">
-                <label>
-                    <input type="checkbox" id="telegram"> Enable Telegram Notifications (requires backend)
-                </label>
-            </div>
-
-            <div class="input-group">
-                <label>
-                    <input type="checkbox" id="update-check" checked> Check for updates on startup
-                </label>
-            </div>
-        </div>
-    </div>
-
-    <div id="logs" class="tabcontent">
-        <div class="container">
-            <h3>Session Logs</h3>
-            <div class="log" id="log-output"></div>
-            <button onclick="clearLogs()">Clear Logs</button>
-        </div>
-    </div>
 
     <script>
-        // Global variables
-        let mediaRecorder;
-        let recordedChunks = [];
-        let recordingActive = false;
-        let currentTab = 'recorder';
-
-        // Tab functionality
-        function openTab(evt, tabName) {
-            const tabcontent = document.getElementsByClassName("tabcontent");
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
+        // Enhanced connection manager
+        class TikTokConnection {
+            constructor() {
+                this.socket = null;
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 5;
+                this.reconnectDelay = 3000;
+                this.isUsingFallback = false;
+                this.currentUsername = null;
+                this.fallbackInterval = null;
             }
 
-            const tablinks = document.getElementsByClassName("tablinks");
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            connect(username) {
+                this.currentUsername = username;
+                this.updateStatus('Connecting...', 'status-connecting');
+                document.getElementById('fallbackWarning').style.display = 'none';
+                
+                try {
+                    // Clear any existing connection
+                    if (this.socket) this.socket.disconnect();
+                    
+                    // Initialize new connection
+                    this.socket = io({
+                        reconnectionAttempts: this.maxReconnectAttempts,
+                        reconnectionDelay: this.reconnectDelay,
+                        transports: ['websocket', 'polling']
+                    });
+
+                    this.setupSocketEvents();
+                } catch (error) {
+                    this.handleConnectionError(error);
+                }
             }
 
-            document.getElementById(tabName).style.display = "block";
-            evt.currentTarget.className += " active";
-            currentTab = tabName;
-        }
+            setupSocketEvents() {
+                this.socket.on('connect', () => {
+                    this.reconnectAttempts = 0;
+                    this.isUsingFallback = false;
+                    this.updateStatus('Connected', 'status-connected');
+                    
+                    // Join the TikTok room
+                    this.socket.emit('join', this.currentUsername);
+                });
 
-        // Input type toggle
-        function toggleInputType() {
-            const inputType = document.getElementById('input-type').value;
-            
-            document.getElementById('url-group').classList.add('hidden');
-            document.getElementById('username-group').classList.add('hidden');
-            document.getElementById('roomid-group').classList.add('hidden');
-            
-            document.getElementById(`${inputType}-group`).classList.remove('hidden');
-        }
+                this.socket.on('chat', (data) => {
+                    if (window.displayChatMessage) {
+                        displayChatMessage(data);
+                    }
+                });
 
-        // Logger function
-        function log(message, type = 'info') {
-            const logOutput = document.getElementById('log-output');
-            const timestamp = new Date().toISOString();
-            const logEntry = document.createElement('div');
-            
-            logEntry.innerHTML = `[${timestamp}] ${message}`;
-            if (type === 'error') {
-                logEntry.classList.add('error');
-            } else if (type === 'success') {
-                logEntry.classList.add('success');
+                this.socket.on('gift', (data) => {
+                    if (window.displayGiftMessage) {
+                        displayGiftMessage(data);
+                    }
+                });
+
+                this.socket.on('disconnect', (reason) => {
+                    this.handleDisconnect(reason);
+                });
+
+                this.socket.on('connect_error', (error) => {
+                    this.handleConnectionError(error);
+                });
             }
-            
-            logOutput.appendChild(logEntry);
-            logOutput.scrollTop = logOutput.scrollHeight;
-            
-            // Also update status if on recorder tab
-            if (currentTab === 'recorder') {
-                const statusDiv = document.getElementById('status');
-                statusDiv.innerHTML = message;
-                statusDiv.className = type;
+
+            handleDisconnect(reason) {
+                console.warn(`Disconnected: ${reason}`);
+                this.updateStatus(`Disconnected (${reason})`, 'status-disconnected');
+                
+                if (!this.isUsingFallback) {
+                    setTimeout(() => this.tryReconnect(), this.reconnectDelay);
+                }
+            }
+
+            tryReconnect() {
+                if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                    this.reconnectAttempts++;
+                    this.updateStatus(`Reconnecting (${this.reconnectAttempts}/${this.maxReconnectAttempts})`, 'status-connecting');
+                    this.connect(this.currentUsername);
+                } else {
+                    this.activateFallbackMode();
+                }
+            }
+
+            activateFallbackMode() {
+                this.isUsingFallback = true;
+                document.getElementById('fallbackWarning').style.display = 'block';
+                this.updateStatus('Using fallback mode', 'status-connecting');
+                
+                // Start polling
+                this.startFallbackPolling();
+            }
+
+            startFallbackPolling() {
+                this.fallbackInterval = setInterval(() => {
+                    $.get(`/api/fallback-chat?username=${this.currentUsername}`, (data) => {
+                        data.forEach(msg => {
+                            if (msg.type === 'chat' && window.displayChatMessage) {
+                                displayChatMessage(msg);
+                            } else if (msg.type === 'gift' && window.displayGiftMessage) {
+                                displayGiftMessage(msg);
+                            }
+                        });
+                    }).fail((error) => {
+                        console.error('Fallback error:', error);
+                    });
+                }, 10000); // Poll every 10 seconds
+            }
+
+            updateStatus(text, statusClass) {
+                const statusElement = document.getElementById('connectionStatus');
+                statusElement.textContent = text;
+                statusElement.className = `connection-status ${statusClass}`;
+            }
+
+            handleConnectionError(error) {
+                console.error('Connection error:', error);
+                this.updateStatus(`Error: ${error.message}`, 'status-error');
+                
+                if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                    setTimeout(() => this.tryReconnect(), this.reconnectDelay);
+                } else {
+                    this.activateFallbackMode();
+                }
             }
         }
 
-        // Clear logs
-        function clearLogs() {
-            document.getElementById('log-output').innerHTML = '';
-        }
+        // Initialize connection manager
+        const tiktokConnection = new TikTokConnection();
 
-        // Check for updates
-        function checkUpdates() {
-            const shouldCheck = document.getElementById('update-check').checked;
-            if (shouldCheck) {
-                log("Checking for updates...");
-                // Simulate update check
-                setTimeout(() => {
-                    log("You're using the latest version", 'success');
-                }, 1500);
+        function generateOverlay() {
+            let username = $('#uniqueIdInput').val();
+            let url = `/obs.html?username=${username}&showLikes=1&showChats=1&showGifts=1&showFollows=1&showJoins=1&bgColor=rgb(24,23,28)&fontColor=rgb(227,229,235)&fontSize=1.3em`;
+        
+            if(username) {
+                window.open(url, '_blank');
             } else {
-                log("Update check skipped");
+                alert("Enter username");
             }
         }
 
-        // Validate cookies
-        function validateCookies(cookieString) {
-            if (!cookieString.trim()) return null;
-            
-            try {
-                return JSON.parse(cookieString);
-            } catch (e) {
-                log("Invalid cookies format. Please provide valid JSON.", 'error');
-                return null;
-            }
-        }
-
-        // Start recording
-        async function startRecording() {
-            const inputType = document.getElementById('input-type').value;
-            let identifier;
-            
-            // Get identifier based on input type
-            switch(inputType) {
-                case 'url':
-                    identifier = document.getElementById('url').value.trim();
-                    if (!identifier) {
-                        log("Please enter a valid TikTok Live URL", 'error');
-                        return;
-                    }
-                    break;
-                case 'username':
-                    identifier = document.getElementById('username').value.trim().replace('@', '');
-                    if (!identifier) {
-                        log("Please enter a valid TikTok username", 'error');
-                        return;
-                    }
-                    identifier = `https://www.tiktok.com/@${identifier}/live`;
-                    break;
-                case 'roomid':
-                    identifier = document.getElementById('room_id').value.trim();
-                    if (!identifier) {
-                        log("Please enter a valid Room ID", 'error');
-                        return;
-                    }
-                    break;
-            }
-
-            const duration = document.getElementById('duration').value;
-            const output = document.getElementById('output').value || 'tiktok_live.mp4';
-            const proxy = document.getElementById('proxy').value;
-            const cookies = validateCookies(document.getElementById('cookies').value);
-            const useTelegram = document.getElementById('telegram').checked;
-
-            // Update UI
-            document.getElementById('start-btn').classList.add('hidden');
-            document.getElementById('stop-btn').classList.remove('hidden');
-            document.getElementById('video-container').classList.remove('hidden');
-            
-            log(`Starting recording for: ${identifier}`);
-            log(`Output file: ${output}`);
-            if (duration) log(`Duration: ${duration} minutes`);
-            if (proxy) log(`Using proxy: ${proxy}`);
-            if (cookies) log(`Using ${cookies.length} cookies`);
-            if (useTelegram) log("Telegram notifications enabled (simulated)");
-
-            // In a real implementation, you would:
-            // 1. Verify the live stream exists
-            // 2. Connect to the stream
-            // 3. Start recording
-            // This is a simulation for GitHub Pages
-            
-            // Simulate recording
-            recordingActive = true;
-            simulateRecording(identifier, duration);
-        }
-
-        // Simulate recording (for demo purposes)
-        function simulateRecording(identifier, duration) {
-            if (!recordingActive) return;
-            
-            // Show the live stream (simulated)
-            const videoContainer = document.getElementById('video-container');
-            videoContainer.innerHTML = `
-                <iframe
-                    src="https://www.tiktok.com/embed/live/${identifier.split('/').pop()}"
-                    allowfullscreen
-                    scrolling="no">
-                </iframe>
-                <p>Note: Actual recording requires server-side implementation</p>
-            `;
-            
-            log("Connected to live stream", 'success');
-            
-            // Simulate duration
-            if (duration) {
-                log(`Recording will automatically stop after ${duration} minutes`);
-                setTimeout(() => {
-                    if (recordingActive) {
-                        stopRecording();
-                        log(`Recording automatically stopped after ${duration} minutes`, 'success');
-                    }
-                }, duration * 60 * 1000);
-            }
-        }
-
-        // Stop recording
-        function stopRecording() {
-            recordingActive = false;
-            
-            document.getElementById('start-btn').classList.remove('hidden');
-            document.getElementById('stop-btn').classList.add('hidden');
-            
-            log("Recording stopped", 'success');
-            log("Download would be available here in a real implementation");
-            
-            // In a real implementation, you would:
-            // 1. Stop the recording
-            // 2. Save the file
-            // 3. Potentially upload to Telegram
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            checkUpdates();
-            toggleInputType();
-            
-            // Check for URL parameters
-            const urlParams = new URLSearchParams(window.location.search);
-            const url = urlParams.get('url');
-            const user = urlParams.get('user');
-            const roomId = urlParams.get('room_id');
-            
-            if (url) {
-                document.getElementById('input-type').value = 'url';
-                document.getElementById('url').value = url;
-                toggleInputType();
-            } else if (user) {
-                document.getElementById('input-type').value = 'username';
-                document.getElementById('username').value = user;
-                toggleInputType();
-            } else if (roomId) {
-                document.getElementById('input-type').value = 'roomid';
-                document.getElementById('room_id').value = roomId;
-                toggleInputType();
-            }
+        $(document).ready(function() {
+            $('#connectButton').click(function() {
+                const username = $('#uniqueIdInput').val().trim();
+                if (username) {
+                    tiktokConnection.connect(username);
+                } else {
+                    alert("Please enter a username");
+                }
+            });
         });
+    </script>
+</head>
+<body>
+    <div class="head">
+        <h1>TikTok LIVE Chat Reader (Stable)</h1>
+        <span class="subTitle">Source: <a href="https://github.com/zerodytrash/TikTok-Chat-Reader">https://github.com/zerodytrash/TikTok-Chat-Reader</a></span>      
+    </div>
+
+    <div>
+        A chat reader for <a href="https://www.tiktok.com/live">TikTok LIVE</a> utilizing <a href="https://github.com/zerodytrash/TikTok-Live-Connector">TikTok-Live-Connector</a> and <a href="https://socket.io/">Socket.IO</a> to forward the data to the client. More Tools available at <a href="https://tikfinity.zerody.one/" target="_blank">TikFinity</a>.
+    </div>
+
+    <div class="inputFields">
+        <p>Enter the <b>@username</b> of a user who is currently live:</p>
+        <input type="text" id="uniqueIdInput" placeholder="@username">
+        <input type="button" id="connectButton" value="Connect">
+        <a href="#" onclick="generateOverlay()">Generate Overlay URL</a>
+    </div>
+
+    <div id="connectionStatus" class="connection-status">Ready to connect</div>
+    <div id="fallbackWarning">Warning: Using fallback mode (data may be delayed)</div>
+
+    <table class="splitstatetable">
+        <tr>
+            <td>
+                <pre id="stateText"></pre>
+            </td>
+            <td>
+                <div id="roomStats"></div>
+            </td>
+        </tr>
+    </table>
+
+    <table class="splitchattable">
+        <tr>
+            <td>
+                <div class="chatcontainer">
+                    <h3 class="containerheader">Chats</h3>
+                    <div id="chatMessages"></div>
+                </div>
+            </td>
+            <td>
+                <div class="giftcontainer">
+                    <h3 class="containerheader">Gifts</h3>
+                    <div id="giftMessages"></div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <script>
+        // Chat display functions
+        function displayChatMessage(data) {
+            const chatContainer = $('.chatcontainer #chatMessages');
+            const messageElement = $(`
+                <div class="chat-message">
+                    <strong>${data.user.nickname}:</strong> ${data.comment}
+                </div>
+            `);
+            chatContainer.append(messageElement);
+            chatContainer.scrollTop(chatContainer[0].scrollHeight);
+        }
+
+        function displayGiftMessage(data) {
+            const giftContainer = $('.giftcontainer #giftMessages');
+            const giftElement = $(`
+                <div class="gift-message">
+                    <strong>${data.user.nickname}</strong> sent ${data.giftCount}x ${data.giftName}
+                </div>
+            `);
+            giftContainer.append(giftElement);
+            giftContainer.scrollTop(giftContainer[0].scrollHeight);
+        }
     </script>
 </body>
 </html>
