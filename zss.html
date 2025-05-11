@@ -104,13 +104,24 @@
             padding-bottom: 8px;
             margin-bottom: 15px;
         }
+        .strength-meter {
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .strength-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #dc3545, #f94f6d, #28a745);
+        }
     </style>
 </head>
 <body class="d-flex align-items-center py-4">
     <div class="container">
         <div class="card">
             <div class="card-header text-center py-3">
-                <h1 class="mb-0">Zombie Survival Battle Prediction</h1>
+                <h1 class="mb-0">Battle Outcome Predictor</h1>
             </div>
             <div class="card-body">
                 <form id="battleForm">
@@ -122,21 +133,21 @@
                             <label for="attackerAttackPower" class="form-label">
                                 <i class="fas fa-gun icon"></i>Attack Power
                             </label>
-                            <input type="number" class="form-control" id="attackerAttackPower" min="0" value="84943" required>
-                            <div class="form-text">Total attack power of all your active troops</div>
+                            <input type="number" class="form-control" id="attackerAttackPower" min="0" value="102611" required>
+                            <div class="form-text">Total attack power of your forces</div>
                         </div>
                         <div class="mb-3">
                             <label for="attackerActiveTroops" class="form-label">
                                 <i class="fas fa-person-military-rifle icon"></i>Active Troops
                             </label>
-                            <input type="number" class="form-control" id="attackerActiveTroops" min="0" value="12445" required>
+                            <input type="number" class="form-control" id="attackerActiveTroops" min="0" value="13442" required>
                             <div class="form-text">Number of troops ready for battle</div>
                         </div>
                         <div class="mb-3">
                             <label for="attackerTotalTroops" class="form-label">
                                 <i class="fas fa-people-group icon"></i>Total Troops
                             </label>
-                            <input type="number" class="form-control" id="attackerTotalTroops" min="0" value="30100" required>
+                            <input type="number" class="form-control" id="attackerTotalTroops" min="0" value="30390" required>
                             <div class="form-text">All troops you own (active + in training)</div>
                         </div>
                     </div>
@@ -150,28 +161,28 @@
                             <label for="defenderAttackPower" class="form-label">
                                 <i class="fas fa-gun icon"></i>Enemy Attack Power
                             </label>
-                            <input type="number" class="form-control" id="defenderAttackPower" min="0" value="1651148" required>
+                            <input type="number" class="form-control" id="defenderAttackPower" min="0" value="9721626" required>
                             <div class="form-text">Total attack power of enemy forces</div>
                         </div>
                         <div class="mb-3">
                             <label for="defenderShieldCurrent" class="form-label">
                                 <i class="fas fa-shield-alt icon"></i>Current Shield
                             </label>
-                            <input type="number" class="form-control" id="defenderShieldCurrent" min="0" value="14000" required>
+                            <input type="number" class="form-control" id="defenderShieldCurrent" min="0" value="20000" required>
                             <div class="form-text">Enemy's current defense shield value</div>
                         </div>
                         <div class="mb-3">
                             <label for="defenderShieldMax" class="form-label">
                                 <i class="fas fa-shield-virus icon"></i>Max Shield
                             </label>
-                            <input type="number" class="form-control" id="defenderShieldMax" min="0" value="14000" required>
+                            <input type="number" class="form-control" id="defenderShieldMax" min="0" value="20000" required>
                             <div class="form-text">Enemy's maximum shield capacity</div>
                         </div>
                         <div class="mb-3">
                             <label for="defenderTotalTroops" class="form-label">
                                 <i class="fas fa-people-group icon"></i>Total Enemy Troops
                             </label>
-                            <input type="number" class="form-control" id="defenderTotalTroops" min="0" value="50583" required>
+                            <input type="number" class="form-control" id="defenderTotalTroops" min="0" value="2791" required>
                             <div class="form-text">All troops owned by the enemy</div>
                         </div>
                     </div>
@@ -231,42 +242,59 @@
                 return;
             }
 
-            // Calculate shield ratio as defense multiplier (from 0 to 1)
-            const shieldRatio = defenderShieldMax === 0 ? 0 : defenderShieldCurrent / defenderShieldMax;
-
-            // Effective defender defense power combines attack power and shield (weighted)
-            const defenderEffectivePower = defenderAttackPower * (1 + shieldRatio);
-
-            // Attacker total attack power (attack for active troops only)
-            const attackerEffectivePower = attackerAttackPower * attackerActiveTroops;
-
-            // Calculate ratio attacker vs defender
+            // CORRECTED BATTLE CALCULATION FORMULA
+            // 1. Calculate shield effectiveness (0-1)
+            const shieldEffectiveness = defenderShieldCurrent / defenderShieldMax;
+            
+            // 2. Calculate troop effectiveness with diminishing returns
+            const attackerTroopEffectiveness = Math.min(1, Math.log10(attackerActiveTroops) / 3);
+            const defenderTroopEffectiveness = Math.min(1, Math.log10(defenderTotalTroops) / 3);
+            
+            // 3. Calculate effective powers
+            const attackerEffectivePower = attackerAttackPower * attackerTroopEffectiveness;
+            const defenderEffectivePower = defenderAttackPower * defenderTroopEffectiveness * (1 + shieldEffectiveness);
+            
+            // 4. Calculate strength ratio
             const strengthRatio = attackerEffectivePower / defenderEffectivePower;
+            const percentageChance = Math.min(90, Math.max(10, 50 * strengthRatio));
 
-            // Result messages based on ratio thresholds
+            // Visual strength indicator
+            const strengthMeter = `<div class="strength-meter">
+                <div class="strength-fill" style="width: ${percentageChance}%; background: ${
+                    strengthRatio > 1.2 ? '#28a745' : 
+                    strengthRatio > 0.8 ? '#f94f6d' : '#dc3545'
+                }"></div>
+            </div>`;
+
+            // Result messages
             let message = '';
             let className = '';
 
-            if (strengthRatio > 1.25) {
-                message = `<h5 class="mb-3"><i class="fas fa-trophy text-success"></i> VICTORY!</h5>` +
-                    `<p><i class="fas fa-bolt icon"></i> Your effective power: <strong>${attackerEffectivePower.toLocaleString()}</strong></p>` +
-                    `<p><i class="fas fa-shield-alt icon"></i> Enemy effective power: <strong>${defenderEffectivePower.toLocaleString()}</strong> (including shield)</p>` +
-                    `<p><i class="fas fa-person-military-rifle icon"></i> Your active troops: <strong>${attackerActiveTroops.toLocaleString()}</strong>, total troops: <strong>${attackerTotalTroops.toLocaleString()}</strong></p>` +
-                    `<p><i class="fas fa-skull icon"></i> Enemy total troops: <strong>${defenderTotalTroops.toLocaleString()}</strong></p>`;
+            if (strengthRatio > 1.2) {
+                message = `<h5 class="mb-3"><i class="fas fa-trophy text-success"></i> VICTORY LIKELY (${Math.round(percentageChance)}% chance)</h5>` +
+                    `<p><i class="fas fa-bolt icon"></i> Your effective power: <strong>${Math.round(attackerEffectivePower).toLocaleString()}</strong></p>` +
+                    `<p><i class="fas fa-shield-alt icon"></i> Enemy effective power: <strong>${Math.round(defenderEffectivePower).toLocaleString()}</strong></p>` +
+                    `<p>Strength ratio: <strong>${strengthRatio.toFixed(2)}:1</strong></p>` +
+                    strengthMeter +
+                    `<p class="mt-2"><i class="fas fa-lightbulb icon"></i> Your forces have a strong advantage in this battle.</p>`;
                 className = 'win';
-            } else if (strengthRatio >= 0.85 && strengthRatio <= 1.25) {
-                message = `<h5 class="mb-3"><i class="fas fa-scale-balanced text-secondary"></i> DRAW</h5>` +
-                    `<p><i class="fas fa-bolt icon"></i> Your effective power: <strong>${attackerEffectivePower.toLocaleString()}</strong></p>` +
-                    `<p><i class="fas fa-shield-alt icon"></i> Enemy effective power: <strong>${defenderEffectivePower.toLocaleString()}</strong> (including shield)</p>` +
-                    `<p><i class="fas fa-person-military-rifle icon"></i> Your active troops: <strong>${attackerActiveTroops.toLocaleString()}</strong>, total troops: <strong>${attackerTotalTroops.toLocaleString()}</strong></p>` +
-                    `<p><i class="fas fa-skull icon"></i> Enemy total troops: <strong>${defenderTotalTroops.toLocaleString()}</strong></p>`;
+            } 
+            else if (strengthRatio > 0.8) {
+                message = `<h5 class="mb-3"><i class="fas fa-scale-balanced text-secondary"></i> CLOSE BATTLE (${Math.round(percentageChance)}% chance)</h5>` +
+                    `<p><i class="fas fa-bolt icon"></i> Your effective power: <strong>${Math.round(attackerEffectivePower).toLocaleString()}</strong></p>` +
+                    `<p><i class="fas fa-shield-alt icon"></i> Enemy effective power: <strong>${Math.round(defenderEffectivePower).toLocaleString()}</strong></p>` +
+                    `<p>Strength ratio: <strong>${strengthRatio.toFixed(2)}:1</strong></p>` +
+                    strengthMeter +
+                    `<p class="mt-2"><i class="fas fa-lightbulb icon"></i> This battle could go either way. Consider reinforcements or tactics.</p>`;
                 className = 'draw';
-            } else {
-                message = `<h5 class="mb-3"><i class="fas fa-skull-crossbones text-danger"></i> DEFEAT</h5>` +
-                    `<p><i class="fas fa-bolt icon"></i> Your effective power: <strong>${attackerEffectivePower.toLocaleString()}</strong></p>` +
-                    `<p><i class="fas fa-shield-alt icon"></i> Enemy effective power: <strong>${defenderEffectivePower.toLocaleString()}</strong> (including shield)</p>` +
-                    `<p><i class="fas fa-person-military-rifle icon"></i> Your active troops: <strong>${attackerActiveTroops.toLocaleString()}</strong>, total troops: <strong>${attackerTotalTroops.toLocaleString()}</strong></p>` +
-                    `<p><i class="fas fa-skull icon"></i> Enemy total troops: <strong>${defenderTotalTroops.toLocaleString()}</strong></p>`;
+            } 
+            else {
+                message = `<h5 class="mb-3"><i class="fas fa-skull-crossbones text-danger"></i> DEFEAT LIKELY (${Math.round(percentageChance)}% chance)</h5>` +
+                    `<p><i class="fas fa-bolt icon"></i> Your effective power: <strong>${Math.round(attackerEffectivePower).toLocaleString()}</strong></p>` +
+                    `<p><i class="fas fa-shield-alt icon"></i> Enemy effective power: <strong>${Math.round(defenderEffectivePower).toLocaleString()}</strong></p>` +
+                    `<p>Strength ratio: <strong>${strengthRatio.toFixed(2)}:1</strong></p>` +
+                    strengthMeter +
+                    `<p class="mt-2"><i class="fas fa-lightbulb icon"></i> Your forces are significantly outmatched. Consider alternative strategies.</p>`;
                 className = 'lose';
             }
 
@@ -281,14 +309,14 @@
         }
 
         function resetForm() {
-            attackerAttackPowerInput.value = 84943;
-            attackerActiveTroopsInput.value = 12445;
-            attackerTotalTroopsInput.value = 30100;
+            attackerAttackPowerInput.value = 102611;
+            attackerActiveTroopsInput.value = 13442;
+            attackerTotalTroopsInput.value = 30390;
 
-            defenderAttackPowerInput.value = 1651148;
-            defenderShieldCurrentInput.value = 14000;
-            defenderShieldMaxInput.value = 14000;
-            defenderTotalTroopsInput.value = 50583;
+            defenderAttackPowerInput.value = 9721626;
+            defenderShieldCurrentInput.value = 20000;
+            defenderShieldMaxInput.value = 20000;
+            defenderTotalTroopsInput.value = 2791;
 
             resultEl.hidden = true;
             resultEl.innerHTML = '';
@@ -297,6 +325,9 @@
 
         calculateBtn.addEventListener('click', calculateBattle);
         resetBtn.addEventListener('click', resetForm);
+
+        // Initialize with your example values
+        resetForm();
     });
     </script>
 </body>
