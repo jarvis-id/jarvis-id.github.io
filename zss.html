@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zombie Survival Battle Prediction</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #232526, #1c1c1c);
+            color: #333;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            max-width: 600px;
+        }
+        .card {
+            background-color: white;
+            border: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #f94f6d;
+        }
+        h1 {
+            color: #f94f6d;
+            font-weight: 700;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .form-control {
+            background-color: white;
+            color: #495057;
+            border: 1px solid #ced4da;
+        }
+        .form-control:focus {
+            background-color: white;
+            color: #495057;
+            border-color: #f94f6d;
+            box-shadow: 0 0 0 0.25rem rgba(249, 79, 109, 0.25);
+        }
+        .btn-primary {
+            background-color: #f94f6d;
+            border: none;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background-color: #ff1f49;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            border: none;
+            font-weight: 600;
+        }
+        .result-box {
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .win {
+            background-color: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .lose {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        .draw {
+            background-color: #e2e3e5;
+            color: #383d41;
+            border-left: 4px solid #6c757d;
+        }
+        .icon {
+            margin-right: 8px;
+            color: #f94f6d;
+            width: 18px;
+            display: inline-block;
+            text-align: center;
+        }
+        .legend-icon {
+            color: #f94f6d;
+            margin-right: 6px;
+        }
+        .recon-info {
+            font-size: 0.8rem;
+            color: #6c757d;
+            font-weight: normal;
+        }
+        .form-text {
+            color: #6c757d;
+        }
+        .section-title {
+            color: #f94f6d;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body class="d-flex align-items-center py-4">
+    <div class="container">
+        <div class="card">
+            <div class="card-header text-center py-3">
+                <h1 class="mb-0">Zombie Survival Battle Prediction</h1>
+            </div>
+            <div class="card-body">
+                <form id="battleForm">
+                    <div class="mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-user legend-icon"></i>Attacker Data (You)
+                        </h5>
+                        <div class="mb-3">
+                            <label for="attackerAttackPower" class="form-label">
+                                <i class="fas fa-gun icon"></i>Attack Power
+                            </label>
+                            <input type="number" class="form-control" id="attackerAttackPower" min="0" value="84943" required>
+                            <div class="form-text">Total attack power of all your active troops</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="attackerActiveTroops" class="form-label">
+                                <i class="fas fa-person-military-rifle icon"></i>Active Troops
+                            </label>
+                            <input type="number" class="form-control" id="attackerActiveTroops" min="0" value="12445" required>
+                            <div class="form-text">Number of troops ready for battle</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="attackerTotalTroops" class="form-label">
+                                <i class="fas fa-people-group icon"></i>Total Troops
+                            </label>
+                            <input type="number" class="form-control" id="attackerTotalTroops" min="0" value="30100" required>
+                            <div class="form-text">All troops you own (active + in training)</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-skull legend-icon"></i>Target Data (Enemy)
+                            <span class="recon-info">*based on reconnaissance</span>
+                        </h5>
+                        <div class="mb-3">
+                            <label for="defenderAttackPower" class="form-label">
+                                <i class="fas fa-gun icon"></i>Enemy Attack Power
+                            </label>
+                            <input type="number" class="form-control" id="defenderAttackPower" min="0" value="1651148" required>
+                            <div class="form-text">Total attack power of enemy forces</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="defenderShieldCurrent" class="form-label">
+                                <i class="fas fa-shield-alt icon"></i>Current Shield
+                            </label>
+                            <input type="number" class="form-control" id="defenderShieldCurrent" min="0" value="14000" required>
+                            <div class="form-text">Enemy's current defense shield value</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="defenderShieldMax" class="form-label">
+                                <i class="fas fa-shield-virus icon"></i>Max Shield
+                            </label>
+                            <input type="number" class="form-control" id="defenderShieldMax" min="0" value="14000" required>
+                            <div class="form-text">Enemy's maximum shield capacity</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="defenderTotalTroops" class="form-label">
+                                <i class="fas fa-people-group icon"></i>Total Enemy Troops
+                            </label>
+                            <input type="number" class="form-control" id="defenderTotalTroops" min="0" value="50583" required>
+                            <div class="form-text">All troops owned by the enemy</div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                        <button type="button" id="calculateBtn" class="btn btn-primary me-md-2">
+                            <i class="fas fa-calculator"></i> Calculate
+                        </button>
+                        <button type="button" id="resetBtn" class="btn btn-secondary">
+                            <i class="fas fa-rotate-left"></i> Reset
+                        </button>
+                    </div>
+                </form>
+
+                <div id="result" class="result-box mt-4" hidden></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const attackerAttackPowerInput = document.getElementById('attackerAttackPower');
+        const attackerActiveTroopsInput = document.getElementById('attackerActiveTroops');
+        const attackerTotalTroopsInput = document.getElementById('attackerTotalTroops');
+
+        const defenderAttackPowerInput = document.getElementById('defenderAttackPower');
+        const defenderShieldCurrentInput = document.getElementById('defenderShieldCurrent');
+        const defenderShieldMaxInput = document.getElementById('defenderShieldMax');
+        const defenderTotalTroopsInput = document.getElementById('defenderTotalTroops');
+
+        const resultEl = document.getElementById('result');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        function validatePositiveNumber(value) {
+            return Number.isFinite(value) && value > 0;
+        }
+
+        function calculateBattle() {
+            // Get and parse input values
+            const attackerAttackPower = parseInt(attackerAttackPowerInput.value, 10);
+            const attackerActiveTroops = parseInt(attackerActiveTroopsInput.value, 10);
+            const attackerTotalTroops = parseInt(attackerTotalTroopsInput.value, 10);
+
+            const defenderAttackPower = parseInt(defenderAttackPowerInput.value, 10);
+            const defenderShieldCurrent = parseInt(defenderShieldCurrentInput.value, 10);
+            const defenderShieldMax = parseInt(defenderShieldMaxInput.value, 10);
+            const defenderTotalTroops = parseInt(defenderTotalTroopsInput.value, 10);
+
+            if (![attackerAttackPower, attackerActiveTroops, attackerTotalTroops,
+                defenderAttackPower, defenderShieldCurrent, defenderShieldMax, defenderTotalTroops]
+                .every(validatePositiveNumber)) {
+                showResult('Please enter valid positive numbers for all fields.', 'draw');
+                return;
+            }
+
+            // Calculate shield ratio as defense multiplier (from 0 to 1)
+            const shieldRatio = defenderShieldMax === 0 ? 0 : defenderShieldCurrent / defenderShieldMax;
+
+            // Effective defender defense power combines attack power and shield (weighted)
+            const defenderEffectivePower = defenderAttackPower * (1 + shieldRatio);
+
+            // Attacker total attack power (attack for active troops only)
+            const attackerEffectivePower = attackerAttackPower * attackerActiveTroops;
+
+            // Calculate ratio attacker vs defender
+            const strengthRatio = attackerEffectivePower / defenderEffectivePower;
+
+            // Result messages based on ratio thresholds
+            let message = '';
+            let className = '';
+
+            if (strengthRatio > 1.25) {
+                message = `<h5 class="mb-3"><i class="fas fa-trophy text-success"></i> VICTORY!</h5>` +
+                    `<p><i class="fas fa-bolt icon"></i> Your effective power: <strong>${attackerEffectivePower.toLocaleString()}</strong></p>` +
+                    `<p><i class="fas fa-shield-alt icon"></i> Enemy effective power: <strong>${defenderEffectivePower.toLocaleString()}</strong> (including shield)</p>` +
+                    `<p><i class="fas fa-person-military-rifle icon"></i> Your active troops: <strong>${attackerActiveTroops.toLocaleString()}</strong>, total troops: <strong>${attackerTotalTroops.toLocaleString()}</strong></p>` +
+                    `<p><i class="fas fa-skull icon"></i> Enemy total troops: <strong>${defenderTotalTroops.toLocaleString()}</strong></p>`;
+                className = 'win';
+            } else if (strengthRatio >= 0.85 && strengthRatio <= 1.25) {
+                message = `<h5 class="mb-3"><i class="fas fa-scale-balanced text-secondary"></i> DRAW</h5>` +
+                    `<p><i class="fas fa-bolt icon"></i> Your effective power: <strong>${attackerEffectivePower.toLocaleString()}</strong></p>` +
+                    `<p><i class="fas fa-shield-alt icon"></i> Enemy effective power: <strong>${defenderEffectivePower.toLocaleString()}</strong> (including shield)</p>` +
+                    `<p><i class="fas fa-person-military-rifle icon"></i> Your active troops: <strong>${attackerActiveTroops.toLocaleString()}</strong>, total troops: <strong>${attackerTotalTroops.toLocaleString()}</strong></p>` +
+                    `<p><i class="fas fa-skull icon"></i> Enemy total troops: <strong>${defenderTotalTroops.toLocaleString()}</strong></p>`;
+                className = 'draw';
+            } else {
+                message = `<h5 class="mb-3"><i class="fas fa-skull-crossbones text-danger"></i> DEFEAT</h5>` +
+                    `<p><i class="fas fa-bolt icon"></i> Your effective power: <strong>${attackerEffectivePower.toLocaleString()}</strong></p>` +
+                    `<p><i class="fas fa-shield-alt icon"></i> Enemy effective power: <strong>${defenderEffectivePower.toLocaleString()}</strong> (including shield)</p>` +
+                    `<p><i class="fas fa-person-military-rifle icon"></i> Your active troops: <strong>${attackerActiveTroops.toLocaleString()}</strong>, total troops: <strong>${attackerTotalTroops.toLocaleString()}</strong></p>` +
+                    `<p><i class="fas fa-skull icon"></i> Enemy total troops: <strong>${defenderTotalTroops.toLocaleString()}</strong></p>`;
+                className = 'lose';
+            }
+
+            showResult(message, className);
+        }
+
+        function showResult(message, className) {
+            resultEl.innerHTML = message;
+            resultEl.className = `result-box ${className}`;
+            resultEl.hidden = false;
+            resultEl.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            attackerAttackPowerInput.value = 84943;
+            attackerActiveTroopsInput.value = 12445;
+            attackerTotalTroopsInput.value = 30100;
+
+            defenderAttackPowerInput.value = 1651148;
+            defenderShieldCurrentInput.value = 14000;
+            defenderShieldMaxInput.value = 14000;
+            defenderTotalTroopsInput.value = 50583;
+
+            resultEl.hidden = true;
+            resultEl.innerHTML = '';
+            attackerAttackPowerInput.focus();
+        }
+
+        calculateBtn.addEventListener('click', calculateBattle);
+        resetBtn.addEventListener('click', resetForm);
+    });
+    </script>
+</body>
+</html>
