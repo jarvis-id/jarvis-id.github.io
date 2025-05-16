@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Input Utang - Manajemen Utang</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link rel="manifest" href="manifest.json" />
+</head>
+<body>
+    <div class="container">
+        <h1>Manajemen Utang</h1>
+        <div class="notification-permission" id="notificationPermission">
+            <p>Agar notifikasi pengingat berfungsi, mohon izinkan notifikasi dari browser ini.</p>
+            <button id="requestNotificationBtn">Izinkan Notifikasi</button>
+        </div>
+
+        <div class="nav">
+            <a href="input.html" class="active">Input Utang</a>
+            <a href="view.html">Daftar Utang</a>
+        </div>
+
+        <div id="inputTab" class="tab active">
+            <h2>Input Utang Baru</h2>
+            <form id="debtForm">
+                <div class="form-group">
+                    <label for="debtType">Jenis Utang:</label>
+                    <select id="debtType" required>
+                        <option value="">Pilih Jenis Utang</option>
+                        <option value="uang">Uang</option>
+                        <option value="barang">Barang</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Deskripsi:</label>
+                    <input type="text" id="description" placeholder="Contoh: Pinjam uang untuk modal usaha" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="amount">Jumlah/Nilai:</label>
+                    <input type="number" id="amount" placeholder="Contoh: 1000000" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="creditor">Pemberi Utang:</label>
+                    <input type="text" id="creditor" placeholder="Nama orang/toko" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="date">Tanggal Utang:</label>
+                    <input type="date" id="date" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="dueDate">Tanggal Jatuh Tempo:</label>
+                    <input type="date" id="dueDate" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Catatan:</label>
+                    <textarea id="notes" rows="3" placeholder="Tambahan informasi"></textarea>
+                </div>
+
+                <button type="submit">Simpan Utang</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="assets/js/input.js"></script>
+    <script src="assets/js/auth.js"></script>
+</body>
+</html>
