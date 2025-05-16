@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Daftar Utang - Manajemen Utang</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link rel="manifest" href="manifest.json" />
+</head>
+<body>
+    <div class="container">
+        <h1>Manajemen Utang</h1>
+        <div class="notification-permission" id="notificationPermission">
+            <p>Agar notifikasi pengingat berfungsi, mohon izinkan notifikasi dari browser ini.</p>
+            <button id="requestNotificationBtn">Izinkan Notifikasi</button>
+        </div>
+
+        <div class="nav">
+            <a href="index.html">Input Utang</a>
+            <a href="view.html" class="active">Daftar Utang</a>
+        </div>
+
+        <div id="viewTab" class="tab active">
+            <h2>Daftar Utang</h2>
+            <div id="debtListContainer">
+                <table id="debtList">
+                    <thead>
+                        <tr>
+                            <th>Jenis</th>
+                            <th>Deskripsi</th>
+                            <th>Jumlah/Nilai</th>
+                            <th>Pemberi Utang</th>
+                            <th>Tanggal</th>
+                            <th>Jatuh Tempo</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="debtListBody">
+                        <!-- Data akan diisi oleh JavaScript -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2"><strong>Total Hutang:</strong></td>
+                            <td colspan="6" id="totalDebtCell">Rp0</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/view.js"></script>
+    <script src="assets/js/auth.js"></script>
+</body>
+</html>
