@@ -1,6 +1,4 @@
-// --- Konfigurasi ---
-// GANTI placeholder di bawah ini dengan API Key BARU yang sudah Anda buat dan amankan.
-const YOUTUBE_API_KEY = 'AIzaSyBZnA2vpnWzYBfQWjgit222oJTPH-ChxQw'; 
+// --- Konfigurasi (TIDAK PERLU API KEY) ---
 
 // --- Variabel Global ---
 let player; // Instance YouTube Player
@@ -20,8 +18,8 @@ function onYouTubeIframeAPIReady() {
         width: '100%',
         playerVars: {
             'playsinline': 1,
-            'autoplay': 0, // Jangan autoplay saat load pertama
-            'controls': 1  // Tampilkan kontrol bawaan YouTube
+            'autoplay': 0,
+            'controls': 1
         },
         events: {
             'onReady': onPlayerReady,
@@ -37,13 +35,11 @@ function onPlayerReady(event) {
     document.getElementById('skipBtn').disabled = false;
 }
 
-// 4. API akan memanggil fungsi ini saat status player berubah (play, pause, selesai, dll)
+// 4. API akan memanggil fungsi ini saat status player berubah
 function onPlayerStateChange(event) {
     if (event.data == YT.PlayerState.ENDED) {
-        // Jika video selesai, putar video berikutnya di antrian
         playNextVideo();
     }
-    // Update tombol play/pause
     const playPauseBtn = document.getElementById('playPauseBtn');
     if (event.data == YT.PlayerState.PLAYING) {
         playPauseBtn.textContent = 'Jeda';
@@ -54,47 +50,91 @@ function onPlayerStateChange(event) {
 
 // --- Fungsi Logika Aplikasi ---
 
+/**
+ * FUNGSI PENCARIAN BARU - TANPA API
+ * Mencari video dengan mengambil halaman hasil pencarian YouTube
+ * dan mengambil ID video pertama dari data JSON yang disematkan.
+ */
 async function searchVideo(query) {
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}&type=video&maxResults=1`;
+    // Kita butuh proxy untuk menghindari masalah CORS (Cross-Origin Resource Sharing)
+    // 'https://cors-anywhere.herokuapp.com/' adalah proxy publik yang umum digunakan.
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+    
     try {
-        const response = await fetch(url);
+        const response = await fetch(proxyUrl + searchUrl);
         if (!response.ok) {
-            const errorData = await response.json();
-            if (errorData.error.message.includes('API key not valid')) {
-                 throw new Error('API Key tidak valid. Pastikan Anda sudah menggantinya di script.js.');
+            // Jika proxy gagal, coba minta pengguna untuk mengaktifkannya
+            if (response.status === 403) {
+                 throw new Error("Proxy CORS memerlukan aktivasi. Klik link di pesan error di atas, lalu klik 'Request temporary access', dan coba lagi.");
             }
-            throw new Error('Gagal mencari video. Cek API Key dan batasannya.');
+            throw new Error('Gagal mengambil halaman pencarian YouTube.');
         }
-        const data = await response.json();
-        if (!data.items || data.items.length === 0) {
-            throw new Error('Lagu tidak ditemukan di YouTube.');
+        const htmlText = await response.text();
+        
+        // Cari data JSON yang disematkan di dalam halaman HTML
+        const a = htmlText.indexOf("var ytInitialData = ") + "var ytInitialData = ".length;
+        const b = htmlText.indexOf(";</script>", a);
+        const jsonString = htmlText.substring(a, b);
+        const data = JSON.parse(jsonString);
+
+        // Arahkan ke daftar video
+        const videos = data.contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents[0].itemSectionRenderer.contents;
+        
+        // Temukan video pertama yang valid
+        let firstVideo = null;
+        for (let item of videos) {
+            if (item.videoRenderer && item.videoRenderer.videoId) {
+                firstVideo = item.videoRenderer;
+                break;
+            }
         }
-        return data.items[0]; // Mengembalikan objek video pertama
+        
+        if (!firstVideo) {
+            throw new Error('Tidak ada video yang ditemukan dalam hasil pencarian.');
+        }
+
+        // Kembalikan objek yang strukturnya mirip dengan hasil API
+        return {
+            id: { videoId: firstVideo.videoId },
+            snippet: {
+                title: firstVideo.title.runs[0].text,
+                channelTitle: firstVideo.ownerText.runs[0].text
+            }
+        };
+
     } catch (error) {
         console.error('Search Error:', error);
-        addChatMessage(error.message, 'error');
+        if (error.message.includes("Proxy CORS")) {
+             addChatMessage("Aktivasi Proxy Diperlukan: Buka https://cors-anywhere.herokuapp.com/corsdemo lalu klik tombol 'Request temporary access to the demo server'. Setelah itu, coba lagi cari lagu di sini.", 'error');
+        } else {
+            addChatMessage(`Error pencarian: ${error.message}`, 'error');
+        }
         return null;
     }
 }
+
 
 function addVideoToQueue(videoData) {
     queue.push(videoData);
     updateQueueUI();
     addChatMessage(`"${videoData.snippet.title}" ditambahkan ke antrian.`, 'system');
 
-    // Jika ini adalah lagu pertama yang ditambahkan dan tidak ada yang sedang diputar, mulai mainkan
     const playerState = player.getPlayerState();
-    if (playerState === YT.PlayerState.UNSTARTED || playerState === YT.PlayerState.CUED || currentVideoIndex === -1) {
-        playVideoFromQueue(queue.length - 1);
+    if (playerState === YT.PlayerState.UNSTARTED || playerState === YT.PlayerState.ENDED || currentVideoIndex === -1) {
+        playVideoFromQueue(0); // Selalu mulai dari awal jika antrian kosong
+    } else if (queue.length === 1) { // Jika ini lagu pertama yg ditambahkan
+        playVideoFromQueue(0);
     }
 }
+
 
 function playVideoFromQueue(index) {
     if (index < 0 || index >= queue.length) {
         addChatMessage('Antrian selesai.', 'system');
         updateNowPlayingUI(null);
         currentVideoIndex = -1;
-        if(player) player.stopVideo(); // Hentikan video jika antrian habis
+        if(player) player.stopVideo();
         return;
     }
     currentVideoIndex = index;
@@ -105,10 +145,15 @@ function playVideoFromQueue(index) {
 }
 
 function playNextVideo() {
-    playVideoFromQueue(currentVideoIndex + 1);
+    // Jika tidak ada lagu yg sedang diputar, mulai dari awal
+    if(currentVideoIndex === -1 && queue.length > 0) {
+      playVideoFromQueue(0);
+    } else {
+      playVideoFromQueue(currentVideoIndex + 1);
+    }
 }
 
-// --- Fungsi Kontrol UI ---
+// --- Fungsi Kontrol UI (tetap sama) ---
 
 document.getElementById('chatInput').addEventListener('keypress', async (e) => {
     if (e.key === 'Enter' && e.target.value.trim() !== '') {
@@ -124,7 +169,7 @@ document.getElementById('chatInput').addEventListener('keypress', async (e) => {
             addChatMessage('Melewati lagu...', 'system');
             playNextVideo();
         }
-        e.target.value = ''; // Kosongkan input
+        e.target.value = '';
     }
 });
 
@@ -155,7 +200,7 @@ function updateNowPlayingUI(video) {
 
 function updateQueueUI() {
     const queueList = document.getElementById('queueList');
-    queueList.innerHTML = ''; // Kosongkan daftar
+    queueList.innerHTML = '';
     queue.forEach((video, index) => {
         const li = document.createElement('li');
         li.className = 'queue-item';
