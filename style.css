@@ -1,6 +1,6 @@
-/* style.css (Untuk YouTube) */
+/* style.css (Untuk Spotify, Responsive) */
 :root {
-  --youtube-red: #FF0000;
+  --spotify-green: #1DB954;
   --spotify-black: #121212;
   --spotify-dark-gray: #181818;
   --spotify-gray: #282828;
@@ -12,19 +12,18 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: var(--spotify-black);
-  color: var(--spotify-white);
+  background-color: var(--spotify-black); color: var(--spotify-white);
   display: flex; flex-direction: column; min-height: 100vh;
 }
 
 .header {
-  background-color: var(--youtube-red);
-  padding: 15px; text-align: center; font-size: 24px; font-weight: bold; color: var(--spotify-white);
+  background-color: var(--spotify-green); padding: 15px; text-align: center;
+  font-size: 24px; font-weight: bold; color: var(--spotify-black);
 }
 
 .container { display: flex; flex: 1; }
 .queue-container { flex: 1; padding: 20px; overflow-y: auto; background-color: var(--spotify-dark-gray); }
-.queue-container h2 { margin-bottom: 20px; color: var(--youtube-red); }
+.queue-container h2 { margin-bottom: 20px; color: var(--spotify-green); }
 
 .player-container {
   width: 350px; background-color: var(--spotify-gray); padding: 20px;
@@ -32,17 +31,12 @@ body {
 }
 
 .now-playing { text-align: center; margin-bottom: 20px; width: 100%; }
-.now-playing h2 { color: var(--youtube-red); margin-bottom: 15px; }
+.now-playing h2 { color: var(--spotify-green); margin-bottom: 15px; }
 
-/* === GAYA BARU UNTUK PLAYER YOUTUBE === */
-#youtube-player {
-  width: 100%;
-  aspect-ratio: 16 / 9; /* Menjaga rasio video 16:9 */
-  background-color: var(--spotify-dark-gray);
-  margin-bottom: 15px;
-  border-radius: 8px;
-  overflow: hidden; /* Memastikan IFrame tidak keluar dari border-radius */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+.album-art {
+  width: 250px; height: 250px; background-color: var(--spotify-dark-gray);
+  margin: 0 auto 15px; background-size: cover; background-position: center;
+  border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .song-info { margin-bottom: 15px; padding: 0 10px; }
@@ -52,12 +46,13 @@ body {
 .controls { display: flex; justify-content: center; margin-bottom: 20px; gap: 10px; width: 100%; }
 
 button {
-  background-color: var(--youtube-red); color: var(--spotify-white); border: none; padding: 12px 20px;
+  background-color: var(--spotify-green); color: var(--spotify-black); border: none; padding: 12px 20px;
   border-radius: 25px; cursor: pointer; font-weight: bold; font-size: 14px;
   transition: all 0.3s ease; min-width: 100px; text-align: center;
 }
-button:hover { background-color: #e60000; transform: scale(1.05); }
+button:hover { background-color: #1ed760; transform: scale(1.05); }
 button:disabled { background-color: var(--spotify-gray); color: var(--spotify-light-gray); cursor: not-allowed; transform: none; }
+#loginBtn { background-color: var(--spotify-white); color: var(--spotify-black); }
 
 .queue-list { list-style-type: none; padding: 0; }
 .queue-item {
@@ -65,7 +60,7 @@ button:disabled { background-color: var(--spotify-gray); color: var(--spotify-li
   display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease;
 }
 .queue-item:hover { background-color: #3e3e3e; }
-.queue-item.playing { border-left: 5px solid var(--youtube-red); background-color: #383838; }
+.queue-item.playing { border-left: 5px solid var(--spotify-green); background-color: #383838; }
 
 .queue-item-info { flex: 1; overflow: hidden; }
 .queue-item-info strong { display: block; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -75,7 +70,7 @@ button:disabled { background-color: var(--spotify-gray); color: var(--spotify-li
 .chat-messages { height: 150px; overflow-y: auto; margin-bottom: 10px; padding: 10px; background-color: var(--spotify-gray); border-radius: 8px; font-size: 14px; }
 .chat-message { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--spotify-dark-gray); word-break: break-word; }
 .chat-message:last-child { border-bottom: none; margin-bottom: 0; }
-.chat-message.system { color: var(--youtube-red); font-style: italic; }
+.chat-message.system { color: var(--spotify-green); font-style: italic; }
 .chat-message.error { color: #ff4d4d; }
 
 .chat-input { display: flex; margin-top: 10px; }
@@ -94,6 +89,7 @@ button:disabled { background-color: var(--spotify-gray); color: var(--spotify-li
   .header { font-size: 20px; }
   .container { flex-direction: column; }
   .player-container { width: 100%; padding: 15px; border-left: none; border-top: 1px solid var(--spotify-dark-gray); }
+  .album-art { width: 180px; height: 180px; }
   .queue-container { padding: 15px; overflow-y: visible; }
   .song-title { font-size: 18px; }
   .chat-messages { height: 120px; }
