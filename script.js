@@ -1,227 +1,177 @@
 // --- Konfigurasi ---
-const clientId = '910c59b710924f06a0745c6ee6f4e472'; // Client ID Anda
-const spotifyAuthEndpoint = 'https://accounts.spotify.com/authorize';
-const spotifyTokenEndpoint = 'https://accounts.spotify.com/api/token';
-const scopes = ['user-read-private', 'user-read-email', 'user-modify-playback-state', 'streaming'];
+// GANTI placeholder di bawah ini dengan API Key BARU yang sudah Anda buat dan amankan.
+const YOUTUBE_API_KEY = 'AIzaSyBZnA2vpnWzYBfQWjgit222oJTPH-ChxQw'; 
 
-// --- Fungsi Helper untuk PKCE ---
+// --- Variabel Global ---
+let player; // Instance YouTube Player
+let queue = []; // Antrian lagu kita (berisi objek video)
+let currentVideoIndex = -1; // Indeks video yang sedang diputar di antrian
 
-// 1. Membuat code_verifier: string acak
-function generateRandomString(length) {
-    let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < length; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
-}
+// 1. Memuat YouTube IFrame Player API
+const tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+const firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-// 2. Membuat code_challenge dari code_verifier
-async function generateCodeChallenge(codeVerifier) {
-    const data = new TextEncoder().encode(codeVerifier);
-    const digest = await window.crypto.subtle.digest('SHA-256', data);
-    return btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-}
-
-// --- Alur Autentikasi ---
-
-// Fungsi untuk handle login
-document.getElementById('loginBtn').addEventListener('click', async () => {
-    const codeVerifier = generateRandomString(128);
-    const codeChallenge = await generateCodeChallenge(codeVerifier);
-    
-    // Simpan codeVerifier di browser untuk digunakan nanti saat menukar token
-    window.sessionStorage.setItem('code_verifier', codeVerifier);
-
-    const redirectUri = window.location.origin + window.location.pathname;
-    
-    const params = new URLSearchParams({
-        response_type: 'code',
-        client_id: clientId,
-        scope: scopes.join(' '),
-        redirect_uri: redirectUri,
-        code_challenge_method: 'S256',
-        code_challenge: codeChallenge,
-        show_dialog: 'true'
-    });
-    
-    window.location.href = `${spotifyAuthEndpoint}?${params.toString()}`;
-});
-
-// Fungsi untuk menukar code dengan access token
-async function getAccessToken(clientId, code) {
-    const codeVerifier = sessionStorage.getItem('code_verifier');
-    if (!codeVerifier) {
-        throw new Error("Code verifier tidak ditemukan.");
-    }
-
-    const redirectUri = window.location.origin + window.location.pathname;
-
-    const response = await fetch(spotifyTokenEndpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+// 2. Fungsi ini akan dipanggil otomatis saat API YouTube siap
+function onYouTubeIframeAPIReady() {
+    player = new YT.Player('youtube-player', {
+        height: '100%',
+        width: '100%',
+        playerVars: {
+            'playsinline': 1,
+            'autoplay': 0, // Jangan autoplay saat load pertama
+            'controls': 1  // Tampilkan kontrol bawaan YouTube
         },
-        body: new URLSearchParams({
-            grant_type: 'authorization_code',
-            code: code,
-            redirect_uri: redirectUri,
-            client_id: clientId,
-            code_verifier: codeVerifier,
-        }),
+        events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange
+        }
     });
-
-    if (!response.ok) {
-        const errorDetails = await response.json();
-        console.error('Token exchange error:', errorDetails);
-        throw new Error('Gagal mendapatkan access token.');
-    }
-
-    const data = await response.json();
-    // Simpan token di local storage untuk sesi berikutnya
-    localStorage.setItem('spotify_access_token', data.access_token);
-    localStorage.setItem('spotify_refresh_token', data.refresh_token);
-    localStorage.setItem('spotify_token_expires_at', Date.now() + data.expires_in * 1000);
-
-    return data.access_token;
 }
 
+// 3. API akan memanggil fungsi ini saat player siap
+function onPlayerReady(event) {
+    addChatMessage("Player YouTube siap. Silakan tambahkan lagu.", 'system');
+    document.getElementById('playPauseBtn').disabled = false;
+    document.getElementById('skipBtn').disabled = false;
+}
 
-// --- Logika Aplikasi ---
-
-let accessToken = '';
-let player; // Variabel untuk menyimpan instance player
-
-// Fungsi utama yang berjalan saat halaman dimuat
-async function main() {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-
-    // Cek apakah ada 'code' dari redirect Spotify
-    if (code) {
-        try {
-            accessToken = await getAccessToken(clientId, code);
-            // Hapus parameter 'code' dari URL agar bersih
-            window.history.replaceState({}, document.title, window.location.pathname);
-            initializeUI();
-        } catch (error) {
-            console.error('Error:', error);
-            addChatMessage('Gagal melakukan autentikasi dengan Spotify.', 'error');
-            // Tampilkan kembali tombol login jika gagal
-            document.getElementById('loginBtn').style.display = 'block';
-        }
+// 4. API akan memanggil fungsi ini saat status player berubah (play, pause, selesai, dll)
+function onPlayerStateChange(event) {
+    if (event.data == YT.PlayerState.ENDED) {
+        // Jika video selesai, putar video berikutnya di antrian
+        playNextVideo();
+    }
+    // Update tombol play/pause
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    if (event.data == YT.PlayerState.PLAYING) {
+        playPauseBtn.textContent = 'Jeda';
     } else {
-        // Cek apakah ada token yang tersimpan
-        accessToken = localStorage.getItem('spotify_access_token');
-        const expiresAt = localStorage.getItem('spotify_token_expires_at');
-
-        if (accessToken && Date.now() < expiresAt) {
-            initializeUI();
-        } else {
-             // Jika tidak ada token atau sudah kadaluarsa, tampilkan tombol login
-            document.getElementById('loginBtn').style.display = 'block';
-            document.getElementById('playPauseBtn').disabled = true;
-            document.getElementById('skipBtn').disabled = true;
-        }
+        playPauseBtn.textContent = 'Putar';
     }
 }
 
-function initializeUI() {
-    // Sembunyikan tombol login dan tampilkan kontrol player
-    document.getElementById('loginBtn').style.display = 'none';
-    addChatMessage('Berhasil terhubung ke Spotify!', 'system');
-    initializePlayer();
-}
+// --- Fungsi Logika Aplikasi ---
 
-
-// Fungsi untuk inisialisasi player Spotify
-function initializePlayer() {
-    if (!accessToken) return;
-
-    // Pastikan script SDK sudah dimuat (jika belum)
-    if (!window.Spotify) {
-         // ini akan dipanggil dari index.html, jadi seharusnya sudah ada
-         console.error("Spotify SDK belum siap.");
-         return;
-    }
-
-    window.onSpotifyWebPlaybackSDKReady = () => {
-        player = new Spotify.Player({
-            name: 'Sukehigland Player',
-            getOAuthToken: cb => { cb(accessToken); },
-            volume: 0.5
-        });
-
-        player.addListener('ready', ({ device_id }) => {
-            console.log('Ready with Device ID', device_id);
-            document.getElementById('playPauseBtn').disabled = false;
-            document.getElementById('skipBtn').disabled = false;
-            addChatMessage(`Player siap dengan ID: ${device_id}`, 'system');
-        });
-
-        player.addListener('not_ready', ({ device_id }) => {
-            console.log('Device ID has gone offline', device_id);
-        });
-        
-        player.addListener('initialization_error', ({ message }) => {
-            console.error('Gagal inisialisasi player:', message);
-            addChatMessage(`Error player: ${message}`, 'error');
-        });
-
-        player.addListener('authentication_error', ({ message }) => {
-            console.error('Gagal autentikasi player:', message);
-            addChatMessage(`Error autentikasi: ${message}`, 'error');
-            // Mungkin perlu proses refresh token di sini di masa depan
-        });
-        
-        player.addListener('account_error', ({ message }) => {
-            console.error('Error akun:', message);
-            addChatMessage(`Error akun (butuh premium): ${message}`, 'error');
-        });
-
-        player.connect().then(success => {
-            if (success) {
-                console.log('The Web Playback SDK successfully connected to Spotify!');
-            }
-        });
-    };
-    
-    // Jika onSpotifyWebPlaybackSDKReady sudah terpanggil sebelumnya
-    if (window.Spotify && !player) {
-      window.onSpotifyWebPlaybackSDKReady();
-    }
-}
-
-// Fungsi searchTrack (tetap sama)
-async function searchTrack(query) {
-    if (!accessToken) {
-        addChatMessage('Harap login terlebih dahulu.', 'error');
-        return null;
-    }
+async function searchVideo(query) {
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}&type=video&maxResults=1`;
     try {
-        const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
+        const response = await fetch(url);
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error?.message || 'Gagal mencari lagu');
+            if (errorData.error.message.includes('API key not valid')) {
+                 throw new Error('API Key tidak valid. Pastikan Anda sudah menggantinya di script.js.');
+            }
+            throw new Error('Gagal mencari video. Cek API Key dan batasannya.');
         }
         const data = await response.json();
-        if (!data.tracks?.items?.length) {
-            throw new Error('Lagu tidak ditemukan');
+        if (!data.items || data.items.length === 0) {
+            throw new Error('Lagu tidak ditemukan di YouTube.');
         }
-        return data.tracks.items[0];
+        return data.items[0]; // Mengembalikan objek video pertama
     } catch (error) {
-        console.error('Search error:', error);
-        addChatMessage(`Error: ${error.message}`, 'error');
+        console.error('Search Error:', error);
+        addChatMessage(error.message, 'error');
         return null;
     }
 }
 
-// Fungsi untuk menambahkan pesan chat (tetap sama)
+function addVideoToQueue(videoData) {
+    queue.push(videoData);
+    updateQueueUI();
+    addChatMessage(`"${videoData.snippet.title}" ditambahkan ke antrian.`, 'system');
+
+    // Jika ini adalah lagu pertama yang ditambahkan dan tidak ada yang sedang diputar, mulai mainkan
+    const playerState = player.getPlayerState();
+    if (playerState === YT.PlayerState.UNSTARTED || playerState === YT.PlayerState.CUED || currentVideoIndex === -1) {
+        playVideoFromQueue(queue.length - 1);
+    }
+}
+
+function playVideoFromQueue(index) {
+    if (index < 0 || index >= queue.length) {
+        addChatMessage('Antrian selesai.', 'system');
+        updateNowPlayingUI(null);
+        currentVideoIndex = -1;
+        if(player) player.stopVideo(); // Hentikan video jika antrian habis
+        return;
+    }
+    currentVideoIndex = index;
+    const video = queue[currentVideoIndex];
+    player.loadVideoById(video.id.videoId);
+    updateNowPlayingUI(video);
+    updateQueueUI();
+}
+
+function playNextVideo() {
+    playVideoFromQueue(currentVideoIndex + 1);
+}
+
+// --- Fungsi Kontrol UI ---
+
+document.getElementById('chatInput').addEventListener('keypress', async (e) => {
+    if (e.key === 'Enter' && e.target.value.trim() !== '') {
+        const command = e.target.value.trim();
+        if (command.toLowerCase().startsWith('!play ')) {
+            const query = command.substring(6);
+            addChatMessage(`Mencari: ${query}...`, 'system');
+            const video = await searchVideo(query);
+            if (video) {
+                addVideoToQueue(video);
+            }
+        } else if (command.toLowerCase() === '!skip') {
+            addChatMessage('Melewati lagu...', 'system');
+            playNextVideo();
+        }
+        e.target.value = ''; // Kosongkan input
+    }
+});
+
+document.getElementById('skipBtn').addEventListener('click', playNextVideo);
+
+document.getElementById('playPauseBtn').addEventListener('click', () => {
+    if (!player || currentVideoIndex === -1) return;
+    const playerState = player.getPlayerState();
+    if (playerState === YT.PlayerState.PLAYING) {
+        player.pauseVideo();
+    } else {
+        player.playVideo();
+    }
+});
+
+function updateNowPlayingUI(video) {
+    const titleEl = document.getElementById('currentSongTitle');
+    const artistEl = document.getElementById('currentSongArtist');
+    
+    if (video) {
+        titleEl.textContent = video.snippet.title;
+        artistEl.textContent = video.snippet.channelTitle;
+    } else {
+        titleEl.textContent = 'Tidak ada lagu yang diputar';
+        artistEl.textContent = '';
+    }
+}
+
+function updateQueueUI() {
+    const queueList = document.getElementById('queueList');
+    queueList.innerHTML = ''; // Kosongkan daftar
+    queue.forEach((video, index) => {
+        const li = document.createElement('li');
+        li.className = 'queue-item';
+        if (index === currentVideoIndex) {
+            li.classList.add('playing');
+        }
+        li.innerHTML = `
+            <div class="queue-item-info">
+                <strong>${video.snippet.title}</strong>
+                <small>${video.snippet.channelTitle}</small>
+            </div>
+        `;
+        queueList.appendChild(li);
+    });
+}
+
 function addChatMessage(message, type = 'system') {
     const chatMessages = document.getElementById('chatMessages');
     const messageElement = document.createElement('div');
@@ -230,6 +180,3 @@ function addChatMessage(message, type = 'system') {
     chatMessages.appendChild(messageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
-// Panggil fungsi utama saat halaman dimuat
-main();
