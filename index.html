@@ -52,7 +52,7 @@
 
     <script>
         // ======================================================================
-        // ==  PENTING: GANTI DENGAN KUNCI API YOUTUBE ANDA DI BAWAH INI       ==
+        // Kunci API Anda sudah benar di sini. JANGAN UBAH BAGIAN INI.
         // ======================================================================
         const YOUTUBE_API_KEY = 'AIzaSyBZnA2vpnWzYBfQWjgit222oJTPH-ChxQw';
         // ======================================================================
@@ -69,8 +69,6 @@
         function onYouTubeIframeAPIReady() {
             isApiReady = true;
         }
-
-        // --- FUNGSI PLAYER ---
 
         function createPlayer(videoId) {
             document.getElementById('placeholder').style.display = 'none';
@@ -89,7 +87,7 @@
 
         function skipSong() {
             if (songQueue.length === 0) return;
-            songQueue.shift(); // Hapus lagu yang selesai/diskip
+            songQueue.shift();
             playNextSong();
         }
         
@@ -109,13 +107,17 @@
             }
         }
 
-        // --- FUNGSI PENCARIAN & ANTRIAN ---
-
         async function searchYouTube(query) {
-            if (YOUTUBE_API_KEY === 'AIzaSyBZnA2vpnWzYBfQWjgit222oJTPH-ChxQw') {
+            // ==================================================================
+            // INI ADALAH BARIS YANG TELAH DIPERBAIKI
+            // Ia sekarang memeriksa teks placeholder, bukan kunci API Anda.
+            // ==================================================================
+            if (YOUTUBE_API_KEY === 'MASUKKAN_KUNCI_API_YOUTUBE_ANDA_DI_SINI') {
                 alert('Error: Kunci API YouTube belum dimasukkan ke dalam skrip.');
                 return null;
             }
+            // ==================================================================
+
             const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}&type=video&maxResults=1`;
             try {
                 const response = await fetch(url);
@@ -153,7 +155,7 @@
             if (songData) {
                 songQueue.push(songData);
                 updateQueueList();
-                if (songQueue.length === 1) { // Jika ini lagu pertama
+                if (songQueue.length === 1) {
                     playNextSong();
                 }
             } else {
@@ -182,8 +184,6 @@
             });
         }
 
-        // --- FUNGSI PERINTAH ---
-
         function handleCommand() {
             const commandInput = document.getElementById('command-input');
             const command = commandInput.value.trim().toLowerCase();
@@ -196,10 +196,8 @@
                 alert('Perintah tidak dikenali. Gunakan !skip');
             }
             
-            commandInput.value = ''; // Selalu kosongkan input setelahnya
+            commandInput.value = '';
         }
-
-        // --- EVENT LISTENERS ---
 
         document.getElementById('add-btn').addEventListener('click', handleAddSong);
         document.getElementById('song-input').addEventListener('keypress', (e) => {
