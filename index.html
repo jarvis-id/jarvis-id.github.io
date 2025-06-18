@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,7 +14,9 @@
     <div class="container">
         <div class="queue-container">
             <h2>Antrian Lagu</h2>
-            <ul class="queue-list" id="queueList"></ul>
+            <ul class="queue-list" id="queueList">
+                <!-- Antrian lagu akan muncul di sini -->
+            </ul>
         </div>
         
         <div class="player-container">
@@ -35,14 +37,19 @@
         </div>
     </div>
     
-    <div class="chat-container">
-        <div class="chat-messages" id="chatMessages"></div>
+    <!-- PERUBAHAN: Class diganti menjadi "footer-container" agar sesuai dengan CSS responsif -->
+    <div class="footer-container">
+        <div class="chat-messages" id="chatMessages">
+            <!-- Pesan chat akan muncul di sini -->
+        </div>
         <div class="chat-input">
             <input type="text" id="chatInput" placeholder="Ketik [!play artist - title] atau [!skip]">
         </div>
     </div>
 
+    <!-- Script dari Spotify -->
     <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <!-- Script aplikasi Anda -->
     <script src="script.js"></script>
 </body>
 </html>
