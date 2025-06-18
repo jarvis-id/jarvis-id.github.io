@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sukehigland - Spotify Queue Player</title>
+    <title>sukehigland - YouTube Queue Player</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,8 +22,8 @@
         <div class="player-container">
             <div class="now-playing">
                 <h2>Sedang Diputar</h2>
-                <!-- Area ini dikembalikan untuk Album Art Spotify -->
-                <div class="album-art" id="albumArt"></div>
+                <!-- Area ini adalah tempat pemutar YouTube akan muncul -->
+                <div id="youtube-player"></div>
                 <div class="song-info">
                     <div class="song-title" id="currentSongTitle">Tidak ada lagu yang diputar</div>
                     <div class="song-artist" id="currentSongArtist"></div>
@@ -31,23 +31,22 @@
             </div>
             
             <div class="controls">
-                <!-- Kembalikan tombol Login -->
-                <button id="loginBtn">Login Spotify</button>
-                <button id="playPauseBtn" disabled>Putar</button>
-                <button id="skipBtn" disabled>Skip</button>
+                <button id="playPauseBtn" disabled>Putar / Jeda</button>
+                <button id="skipBtn" disabled>Lewati</button>
             </div>
         </div>
     </div>
     
     <div class="footer-container">
-        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-message system">Selamat datang! Ketik [!play nama lagu] untuk memulai.</div>
+        </div>
         <div class="chat-input">
             <input type="text" id="chatInput" placeholder="Ketik [!play artist - title] atau [!skip]">
         </div>
     </div>
 
-    <!-- PENTING: Muat kembali Spotify Web Playback SDK -->
-    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <!-- Hanya script aplikasi Anda yang diperlukan -->
     <script src="script.js"></script>
 </body>
 </html>
