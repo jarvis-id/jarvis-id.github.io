@@ -2,99 +2,47 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TikTok LIVE Chat Reader (Demo)</title>
-
-    <meta name="description" content="A chat reader for TikTok LIVE utilizing TikTok-Live-Connector and Socket.IO to forward the data to the client. This demo project uses the unofficial TikTok API to retrieve chat comments, gifts and other events from TikTok LIVE.">
-    <meta name="keywords" content="TikTok,Live,Livestream,Chat,Reader,Scraper,Tracker,tiktok.com,broadcast,api,library,node,node.js,javascript">
-
+    <title>sukehigland - Spotify Queue Player</title>
     <link rel="stylesheet" href="style.css">
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
-    <script src="connection.js"></script>
-    <script src="app.js"></script>
-
-    <script>
-        function generateOverlay() {
-            let username = $('#uniqueIdInput').val();
-            let url = `/obs.html?username=${username}&showLikes=1&showChats=1&showGifts=1&showFollows=1&showJoins=1&bgColor=rgb(24,23,28)&fontColor=rgb(227,229,235)&fontSize=1.3em`;
-        
-            if(username) {
-                window.open(url, '_blank');
-            } else {
-                alert("Enter username");
-            }
-        }
-
-        $(document).ready(function() {
-            $('#connectButton').click(function() {
-                const username = $('#uniqueIdInput').val().trim();
-                if (username) {
-                    // Call the connection function from connection.js
-                    connectToTikTok(username);
-                } else {
-                    alert("Please enter a username");
-                }
-            });
-        });
-
-        function connectToTikTok(username) {
-            // Initialize connection manager
-            const tiktokConnection = new TikTokConnection();
-            tiktokConnection.connect(username);
-        }
-    </script>
 </head>
 <body>
-    <div class="head">
-        <h1>TikTok LIVE Chat Reader</h1>
-        <span class="subTitle">Source: <a href="https://github.com/zerodytrash/TikTok-Chat-Reader">https://github.com/zerodytrash/TikTok-Chat-Reader</a></span>      
+    <div class="header">
+        sukehigland - Music Queue Player
     </div>
-
-    <div>
-        A chat reader for <a href="https://www.tiktok.com/live">TikTok LIVE</a> utilizing <a href="https://github.com/zerodytrash/TikTok-Live-Connector">TikTok-Live-Connector</a> and <a href="https://socket.io/">Socket.IO</a> to forward the data to the client. More Tools available at <a href="https://tikfinity.zerody.one/" target="_blank">TikFinity</a>.
-    </div>
-
-    <div class="inputFields">
-        <p>Enter the <b>@username</b> of a user who is currently live:</p>
-        <input type="text" id="uniqueIdInput" placeholder="@username">
-        <input type="button" id="connectButton" value="Connect">
-        <a href="#" onclick="generateOverlay()">Generate Overlay URL</a>
-    </div>
-
-    <div id="connectionStatus" class="connection-status">Ready to connect</div>
-    <div id="fallbackWarning" style="display:none;">Warning: Using fallback mode (data may be delayed)</div>
-
-    <table class="splitstatetable">
-        <tr>
-            <td>
-                <pre id="stateText"></pre>
-            </td>
-            <td>
-                <div id="roomStats"></div>
-            </td>
-        </tr>
-    </table>
-
-    <table class="splitchattable">
-        <tr>
-            <td>
-                <div class="chatcontainer">
-                    <h3 class="containerheader">Chats</h3>
-                    <div id="chatMessages"></div>
+    
+    <div class="container">
+        <div class="queue-container">
+            <h2>Antrian Lagu</h2>
+            <ul class="queue-list" id="queueList"></ul>
+        </div>
+        
+        <div class="player-container">
+            <div class="now-playing">
+                <h2>Sedang Diputar</h2>
+                <div class="album-art" id="albumArt"></div>
+                <div class="song-info">
+                    <div class="song-title" id="currentSongTitle">Tidak ada lagu yang diputar</div>
+                    <div class="song-artist" id="currentSongArtist"></div>
                 </div>
-            </td>
-            <td>
-                <div class="giftcontainer">
-                    <h3 class="containerheader ">Gifts</h3>
-                    <div id="giftMessages"></div>
-                </div>
-            </td>
-        </tr>
-    </table>
-    <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"93c035f7fdf9880b","serverTiming":{"name":{"cfExtPri":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.4.0-1-g37f21b1","token":"65f9075973884fc192143938ea377297"}' crossorigin="anonymous"></script>
+            </div>
+            
+            <div class="controls">
+                <button id="loginBtn">Login Spotify</button>
+                <button id="playPauseBtn" disabled>Putar</button>
+                <button id="skipBtn" disabled>Skip</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="chat-container">
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input">
+            <input type="text" id="chatInput" placeholder="Ketik [!play artist - title] atau [!skip]">
+        </div>
+    </div>
+
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
