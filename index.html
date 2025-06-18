@@ -3,256 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify Queue Player</title>
+    <title>Public Music Player</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: #ffffff; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; min-height: 100vh; box-sizing: border-box; }
         .container { width: 100%; max-width: 800px; background-color: #1e1e1e; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); }
-        h1, h2 { text-align: center; color: #1DB954; }
-        #login-screen, #player-screen { width: 100%; }
-        #login-screen { text-align: center; padding: 50px 0; }
-        .spotify-btn { background-color: #1DB954; color: white; padding: 15px 30px; border: none; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; text-decoration: none; transition: background-color 0.2s; }
-        .spotify-btn:hover { background-color: #1ED760; }
-        #player-info { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; background-color: #282828; padding: 10px; border-radius: 8px; }
-        #album-art { width: 80px; height: 80px; border-radius: 4px; object-fit: cover; }
-        #track-info { display: flex; flex-direction: column; justify-content: center; }
-        #track-name { font-size: 1.2em; font-weight: bold; }
-        #artist-name { color: #b3b3b3; }
+        h1, h2, h3 { text-align: center; color: #FF0000; }
+        h3 { margin-top: 25px; color: #ccc; font-weight: normal; font-size: 1.1em; }
+        .player-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; border-radius: 8px; margin-bottom: 20px; }
+        .player-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #placeholder { display: flex; justify-content: center; align-items: center; height: 100%; font-size: 1.2em; color: #888; }
         .controls { display: flex; gap: 10px; margin-bottom: 20px; }
-        #song-input { flex-grow: 1; padding: 10px; border-radius: 5px; border: 1px solid #555; background-color: #333; color: #fff; font-size: 16px; }
-        #add-btn { padding: 10px 20px; border: none; border-radius: 5px; background-color: #1DB954; color: #ffffff; font-weight: bold; cursor: pointer; transition: background-color 0.3s; }
+        .input-field { flex-grow: 1; padding: 10px; border-radius: 5px; border: 1px solid #555; background-color: #333; color: #fff; font-size: 16px; }
+        #add-btn { padding: 10px 20px; border: none; border-radius: 5px; background-color: #FF0000; color: #ffffff; font-weight: bold; cursor: pointer; transition: background-color 0.3s; }
+        #add-btn:hover { background-color: #cc0000; }
         #queue-list { list-style: none; padding: 0; }
-        #queue-list li { background-color: #282828; padding: 10px 15px; border-radius: 5px; margin-bottom: 8px; }
+        #queue-list li { background-color: #282828; padding: 10px 15px; border-radius: 5px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        #queue-list li.playing { border-left: 4px solid #FF0000; font-weight: bold; }
+        .song-title { flex-grow: 1; }
         footer { margin-top: 30px; color: #555; text-align: center; font-size: 0.9em; }
-        footer a { color: #888; text-decoration: none; }
-        footer a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Spotify Queue Player</h1>
-        
-        <div id="login-screen">
-            <p>Login dengan akun Spotify Premium untuk memulai.</p>
-            <button id="login-btn" class="spotify-btn">Login dengan Spotify</button>
+        <h1>Public Music Player</h1>
+
+        <div class="player-wrapper">
+            <div id="player"><div id="placeholder">Pemutar video akan muncul di sini...</div></div>
         </div>
 
-        <div id="player-screen" style="display:none;">
-            <div id="player-info">
-                <img id="album-art" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Album Art">
-                <div id="track-info">
-                    <div id="track-name">Tidak ada lagu yang diputar</div>
-                    <div id="artist-name">...</div>
-                </div>
-            </div>
+        <h3>Minta Lagu</h3>
+        <div class="controls">
+            <input type="text" id="song-input" class="input-field" placeholder="Ketik judul lagu dan artis...">
+            <button id="add-btn">Tambah</button>
+        </div>
 
-            <div class="controls">
-                <input type="text" id="song-input" placeholder="Cari judul lagu dan artis...">
-                <button id="add-btn">Tambah ke Antrian</button>
-            </div>
+        <h3>Perintah</h3>
+        <div class="controls">
+            <input type="text" id="command-input" class="input-field" placeholder="Ketik !skip untuk melewati lagu...">
+        </div>
 
-            <div class="queue-container">
-                <h2 id="queue-title">Antrian (0)</h2>
-                <ul id="queue-list"></ul>
-            </div>
+        <div class="queue-container">
+            <h2 id="queue-title">Antrian (0)</h2>
+            <ul id="queue-list"></ul>
         </div>
     </div>
     
-    <footer>
-        <p>Dibuat oleh <a href="https://github.com/jarvis-id" target="_blank">Jarvis-ID</a></p>
-    </footer>
-    
+    <footer><p>Dibuat oleh <a href="https://github.com/jarvis-id" target="_blank" style="color:#888;">Jarvis-ID</a></p></footer>
+
     <script>
-        // --- KONFIGURASI ---
-        const clientId = '883a07283b8548c2ae527193c6c69db3';
-        const redirectUri = 'https://jarvis-id.github.io/';
-        // ---------------------
+        // ======================================================================
+        // ==  PENTING: GANTI DENGAN KUNCI API YOUTUBE ANDA DI BAWAH INI       ==
+        // ======================================================================
+        const YOUTUBE_API_KEY = 'MASUKKAN_KUNCI_API_YOUTUBE_ANDA_DI_SINI';
+        // ======================================================================
 
-        const scopes = [
-            'streaming',
-            'user-read-email',
-            'user-read-private',
-            'user-read-playback-state',
-            'user-modify-playback-state'
-        ];
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-        let accessToken = null;
-        let player = null;
-        let deviceId = null;
-        const songQueue = []; 
-        let isPlaying = false;
-        let currentTrackUri = null;
+        let player;
+        const songQueue = []; // Sekarang menyimpan objek {id, title}
+        let isApiReady = false;
 
-        window.onload = () => {
-            const hash = getHashParams();
-            if (hash.access_token) {
-                accessToken = hash.access_token;
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('player-screen').style.display = 'block';
-                loadSpotifySDK();
-            }
-        };
-
-        function getHashParams() {
-            const hashParams = {};
-            let e, r = /([^&;=]+)=?([^&;]*)/g,
-                q = window.location.hash.substring(1);
-            while (e = r.exec(q)) {
-                hashParams[e[1]] = decodeURIComponent(e[2]);
-            }
-            // Bersihkan hash dari URL agar tidak terlihat
-            window.history.pushState("", document.title, window.location.pathname + window.location.search);
-            return hashParams;
+        function onYouTubeIframeAPIReady() {
+            isApiReady = true;
         }
 
-        function loadSpotifySDK() {
-            const script = document.createElement('script');
-            script.src = "https://sdk.scdn.co/spotify-player.js";
-            script.async = true;
-            document.body.appendChild(script);
+        // --- FUNGSI PLAYER ---
 
-            window.onSpotifyWebPlaybackSDKReady = () => {
-                initializePlayer();
-            };
-        }
-
-        document.getElementById('login-btn').addEventListener('click', () => {
-            let url = 'https://accounts.spotify.com/authorize';
-            url += '?response_type=token';
-            url += '&client_id=' + encodeURIComponent(clientId);
-            url += '&scope=' + encodeURIComponent(scopes.join(' '));
-            url += '&redirect_uri=' + encodeURIComponent(redirectUri);
-            window.location = url;
-        });
-
-        function initializePlayer() {
-            player = new Spotify.Player({
-                name: 'Web Player by Jarvis-ID',
-                getOAuthToken: cb => { cb(accessToken); },
-                volume: 0.5
-            });
-
-            player.addListener('ready', ({ device_id }) => {
-                console.log('Player siap dengan Device ID:', device_id);
-                deviceId = device_id;
-            });
-
-            player.addListener('not_ready', ({ device_id }) => {
-                console.log('Device ID', device_id, 'telah offline');
-            });
-
-            player.addListener('initialization_error', ({ message }) => { console.error('Gagal inisialisasi:', message); });
-            player.addListener('authentication_error', ({ message }) => { console.error('Gagal otentikasi:', message); alert('Sesi login berakhir, silakan refresh dan login kembali.'); });
-            player.addListener('account_error', ({ message }) => { alert('Error: Akun Spotify Anda harus Premium untuk menggunakan fitur ini.'); });
-
-            player.addListener('player_state_changed', state => {
-                if (!state) { return; }
-                
-                const currentTrack = state.track_window.current_track;
-                const newTrackUri = currentTrack.uri;
-                updateCurrentTrackUI(currentTrack);
-
-                if (isPlaying && state.paused && currentTrackUri !== newTrackUri) {
-                    songQueue.shift();
-                    playNextSong();
-                }
-
-                currentTrackUri = newTrackUri;
-                isPlaying = !state.paused;
-            });
-
-            player.connect().then(success => {
-                if (success) {
-                    console.log('Spotify Player berhasil terhubung.');
-                }
+        function createPlayer(videoId) {
+            document.getElementById('placeholder').style.display = 'none';
+            player = new YT.Player('player', {
+                height: '100%', width: '100%', videoId: videoId,
+                playerVars: { 'playsinline': 1, 'autoplay': 1, 'controls': 1 },
+                events: { 'onStateChange': onPlayerStateChange }
             });
         }
         
-        document.getElementById('add-btn').addEventListener('click', handleAddSong);
-        document.getElementById('song-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleAddSong();
-        });
-
-        async function handleAddSong() {
-            const query = document.getElementById('song-input').value.trim();
-            if (!query) return;
-
-            const track = await searchTrack(query);
-            if (track) {
-                songQueue.push(track);
-                document.getElementById('song-input').value = '';
-                updateQueueList();
-                
-                if (!isPlaying && songQueue.length === 1) {
-                    playNextSong();
-                }
-            } else {
-                alert('Lagu tidak ditemukan!');
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                skipSong();
             }
         }
 
-        async function searchTrack(query) {
-            const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`, {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-            if (!response.ok) {
-                console.error("Gagal mencari lagu, token mungkin sudah kedaluwarsa.");
-                return null;
-            }
-            const data = await response.json();
-            return data.tracks.items[0];
-        }
-
-        async function playSong(spotify_uri) {
-            if (!deviceId) {
-                alert("Player belum siap. Silakan tunggu beberapa saat atau coba putar lagu dari aplikasi Spotify lain untuk mengaktifkan player ini.");
-                return;
-            }
-            try {
-                await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-                    method: 'PUT',
-                    body: JSON.stringify({ uris: [spotify_uri] }),
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
-                });
-            } catch (error) {
-                console.error("Gagal memutar lagu:", error);
-            }
+        function skipSong() {
+            if (songQueue.length === 0) return;
+            songQueue.shift(); // Hapus lagu yang selesai/diskip
+            playNextSong();
         }
         
         function playNextSong() {
+            updateQueueList();
             if (songQueue.length > 0) {
-                playSong(songQueue[0].uri);
+                const nextSongId = songQueue[0].id;
+                if (!player) {
+                    createPlayer(nextSongId);
+                } else {
+                    player.loadVideoById(nextSongId);
+                }
             } else {
-                isPlaying = false;
-                console.log("Antrian kosong.");
-                // player.pause(); // Uncomment jika ingin player berhenti saat antrian kosong
+                if (player) player.destroy();
+                player = null;
+                document.getElementById('placeholder').style.display = 'flex';
+            }
+        }
+
+        // --- FUNGSI PENCARIAN & ANTRIAN ---
+
+        async function searchYouTube(query) {
+            if (YOUTUBE_API_KEY === 'MASUKKAN_KUNCI_API_YOUTUBE_ANDA_DI_SINI') {
+                alert('Error: Kunci API YouTube belum dimasukkan ke dalam skrip.');
+                return null;
+            }
+            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}&type=video&maxResults=1`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.items && data.items.length > 0) {
+                    return {
+                        id: data.items[0].id.videoId,
+                        title: data.items[0].snippet.title
+                    };
+                }
+                return null;
+            } catch (error) {
+                console.error("Error saat mencari di YouTube:", error);
+                return null;
+            }
+        }
+
+        async function handleAddSong() {
+            if (!isApiReady) {
+                alert("API YouTube belum siap, silakan tunggu.");
+                return;
+            }
+            const songInput = document.getElementById('song-input');
+            const query = songInput.value.trim();
+            if (query === '') return;
+
+            songInput.disabled = true;
+            songInput.value = "Mencari...";
+
+            const songData = await searchYouTube(query);
+
+            songInput.disabled = false;
+            songInput.value = "";
+
+            if (songData) {
+                songQueue.push(songData);
+                updateQueueList();
+                if (songQueue.length === 1) { // Jika ini lagu pertama
+                    playNextSong();
+                }
+            } else {
+                alert('Lagu tidak ditemukan.');
             }
         }
         
         function updateQueueList() {
             const queueList = document.getElementById('queue-list');
+            const queueTitle = document.getElementById('queue-title');
             queueList.innerHTML = '';
-            const waitingSongs = songQueue.slice(1); // Ambil semua lagu kecuali yang pertama (sedang diputar)
-            document.getElementById('queue-title').textContent = `Antrian (${waitingSongs.length})`;
+            queueTitle.textContent = `Antrian (${songQueue.length})`;
 
-            waitingSongs.forEach((track, index) => {
+            songQueue.forEach((song, index) => {
                 const li = document.createElement('li');
-                li.textContent = `${index + 1}. ${track.name} - ${track.artists.map(a => a.name).join(', ')}`;
+                const titleSpan = document.createElement('span');
+                titleSpan.textContent = song.title;
+                titleSpan.className = 'song-title';
+                li.appendChild(titleSpan);
+
+                if (index === 0 && player) {
+                    li.classList.add('playing');
+                    titleSpan.textContent = `▶ ${song.title}`;
+                }
                 queueList.appendChild(li);
             });
         }
-        
-        function updateCurrentTrackUI(track) {
-            if (!track) {
-                document.getElementById('track-name').textContent = "Tidak ada lagu yang diputar";
-                document.getElementById('artist-name').textContent = "...";
-                document.getElementById('album-art').src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-            } else {
-                document.getElementById('track-name').textContent = track.name;
-                document.getElementById('artist-name').textContent = track.artists.map(artist => artist.name).join(', ');
-                document.getElementById('album-art').src = track.album.images[0].url;
+
+        // --- FUNGSI PERINTAH ---
+
+        function handleCommand() {
+            const commandInput = document.getElementById('command-input');
+            const command = commandInput.value.trim().toLowerCase();
+
+            if (command === '!skip') {
+                if (songQueue.length > 0) {
+                    skipSong();
+                }
+            } else if (command !== '') {
+                alert('Perintah tidak dikenali. Gunakan !skip');
             }
-            updateQueueList();
+            
+            commandInput.value = ''; // Selalu kosongkan input setelahnya
         }
+
+        // --- EVENT LISTENERS ---
+
+        document.getElementById('add-btn').addEventListener('click', handleAddSong);
+        document.getElementById('song-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleAddSong();
+        });
+        document.getElementById('command-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleCommand();
+        });
     </script>
 </body>
 </html>
