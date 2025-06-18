@@ -1,5 +1,6 @@
 // --- Konfigurasi ---
-const YOUTUBE_API_KEY = 'GANTI_DENGAN_API_KEY_YOUTUBE_ANDA'; // <<<< PENTING: GANTI INI
+// GANTI placeholder di bawah ini dengan API Key BARU yang sudah Anda buat dan amankan.
+const YOUTUBE_API_KEY = 'AIzaSyBZnA2vpnWzYBfQWjgit222oJTPH-ChxQw'; 
 
 // --- Variabel Global ---
 let player; // Instance YouTube Player
@@ -58,7 +59,11 @@ async function searchVideo(query) {
     try {
         const response = await fetch(url);
         if (!response.ok) {
-            throw new Error('Gagal mencari video. Cek API Key Anda.');
+            const errorData = await response.json();
+            if (errorData.error.message.includes('API key not valid')) {
+                 throw new Error('API Key tidak valid. Pastikan Anda sudah menggantinya di script.js.');
+            }
+            throw new Error('Gagal mencari video. Cek API Key dan batasannya.');
         }
         const data = await response.json();
         if (!data.items || data.items.length === 0) {
@@ -78,8 +83,9 @@ function addVideoToQueue(videoData) {
     addChatMessage(`"${videoData.snippet.title}" ditambahkan ke antrian.`, 'system');
 
     // Jika ini adalah lagu pertama yang ditambahkan dan tidak ada yang sedang diputar, mulai mainkan
-    if (currentVideoIndex === -1 && player.getPlayerState() !== YT.PlayerState.PLAYING) {
-        playNextVideo();
+    const playerState = player.getPlayerState();
+    if (playerState === YT.PlayerState.UNSTARTED || playerState === YT.PlayerState.CUED || currentVideoIndex === -1) {
+        playVideoFromQueue(queue.length - 1);
     }
 }
 
@@ -88,6 +94,7 @@ function playVideoFromQueue(index) {
         addChatMessage('Antrian selesai.', 'system');
         updateNowPlayingUI(null);
         currentVideoIndex = -1;
+        if(player) player.stopVideo(); // Hentikan video jika antrian habis
         return;
     }
     currentVideoIndex = index;
@@ -104,10 +111,11 @@ function playNextVideo() {
 // --- Fungsi Kontrol UI ---
 
 document.getElementById('chatInput').addEventListener('keypress', async (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && e.target.value.trim() !== '') {
         const command = e.target.value.trim();
         if (command.toLowerCase().startsWith('!play ')) {
             const query = command.substring(6);
+            addChatMessage(`Mencari: ${query}...`, 'system');
             const video = await searchVideo(query);
             if (video) {
                 addVideoToQueue(video);
