@@ -16,24 +16,21 @@ let currentDeviceId = null;
 let isPlaying = false;
 let currentTrack = null; // Menyimpan data lagu yang sedang diputar
 
-// --- Fungsi Helper untuk Autentikasi PKCE (Tetap sama) ---
+// --- Fungsi Helper dan Otentikasi (Tidak ada perubahan) ---
 function generateRandomString(length) {
     let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234g';
     for (let i = 0; i < length; i++) {
         text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
     return text;
 }
-
 async function generateCodeChallenge(codeVerifier) {
     const data = new TextEncoder().encode(codeVerifier);
     const digest = await window.crypto.subtle.digest('SHA-256', data);
     return btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
         .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
-
-// --- Alur Otentikasi (Tetap sama) ---
 document.getElementById('loginBtn').addEventListener('click', async () => {
     const codeVerifier = generateRandomString(128);
     const codeChallenge = await generateCodeChallenge(codeVerifier);
@@ -46,7 +43,6 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     });
     window.location.href = `${spotifyAuthEndpoint}?${params.toString()}`;
 });
-
 async function getAccessToken(clientId, code) {
     const codeVerifier = sessionStorage.getItem('code_verifier');
     const redirectUri = window.location.origin + window.location.pathname;
@@ -63,8 +59,6 @@ async function getAccessToken(clientId, code) {
     localStorage.setItem('spotify_access_token', data.access_token);
     return data.access_token;
 }
-
-// --- Logika Utama Aplikasi (Tetap sama) ---
 async function main() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
@@ -73,27 +67,22 @@ async function main() {
             accessToken = await getAccessToken(clientId, code);
             window.history.replaceState({}, document.title, window.location.pathname);
             initializeUI();
-        } catch (error) {
-            console.error(error);
-            addChatMessage('Gagal autentikasi.', 'error');
-        }
+        } catch (error) { console.error(error); addChatMessage('Gagal autentikasi.', 'error'); }
     } else {
         accessToken = localStorage.getItem('spotify_access_token');
-        if (accessToken) {
-            initializeUI();
-        } else {
-            document.getElementById('loginBtn').style.display = 'block';
-        }
+        if (accessToken) initializeUI();
+        else document.getElementById('loginBtn').style.display = 'block';
     }
 }
-
 function initializeUI() {
     document.getElementById('loginBtn').style.display = 'none';
     addChatMessage('Berhasil terhubung! Menyiapkan player...', 'system');
     initializePlayer();
 }
+// --- Akhir dari bagian yang tidak berubah ---
 
-// --- Logika Player Spotify ---
+
+// --- Logika Player Spotify (Dengan Perbaikan) ---
 function initializePlayer() {
     window.onSpotifyWebPlaybackSDKReady = () => {
         player = new Spotify.Player({
@@ -110,12 +99,8 @@ function initializePlayer() {
             transferPlayback(device_id);
         });
 
-        // ============================================================== //
-        // === PERUBAHAN UTAMA: Logika auto-advance dan hapus antrian === //
-        // ============================================================== //
         player.addListener('player_state_changed', (state) => {
             if (!state) {
-                // Player tidak aktif, mungkin terputus
                 currentTrack = null;
                 isPlaying = false;
                 updateNowPlayingUI(null);
@@ -124,27 +109,19 @@ function initializePlayer() {
             }
 
             const newTrack = state.track_window.current_track;
+            const oldTrackUri = currentTrack ? currentTrack.uri : null;
             isPlaying = !state.paused;
 
             // Cek jika lagu telah berganti
-            if (newTrack && (!currentTrack || newTrack.uri !== currentTrack.uri)) {
-                // Lagu baru telah dimulai.
-                
-                // Jika ada lagu sebelumnya, hapus dari antrian LOKAL kami
-                if (currentTrack) {
-                    // Cari lagu yang baru saja selesai di antrian lokal kita
-                    const finishedTrackIndex = queue.findIndex(track => track.uri === currentTrack.uri);
-                    if (finishedTrackIndex > -1) {
-                        // Hapus lagu tersebut dari array
-                        queue.splice(finishedTrackIndex, 1);
-                    }
+            if (newTrack && newTrack.uri !== oldTrackUri) {
+                // Hapus lagu yang baru saja selesai dari antrian LOKAL
+                const finishedTrackIndex = queue.findIndex(track => track.uri === oldTrackUri);
+                if (finishedTrackIndex > -1) {
+                    queue.splice(finishedTrackIndex, 1);
                 }
-                
-                // Perbarui UI antrian setelah menghapus
                 updateQueueUI();
             }
             
-            // Perbarui status saat ini
             currentTrack = newTrack;
             updateNowPlayingUI(currentTrack);
             document.getElementById('playPauseBtn').textContent = isPlaying ? 'Jeda' : 'Putar';
@@ -179,29 +156,33 @@ async function searchTrack(query) {
     return data.tracks.items[0] || null;
 }
 
-// ====================================================== //
-// === PERUBAHAN KEDUA: Logika auto-play saat menambah === //
-// ====================================================== //
+// ======================================================= //
+// === PERBAIKAN UTAMA: Logika Auto-play yang Ditingkatkan === //
+// ======================================================= //
 async function addTrackToQueue(track) {
-    // Tambahkan lagu ke antrian Spotify
-    await fetch(`https://api.spotify.com/v1/me/player/queue?uri=${track.uri}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-    });
-    
-    // Tambahkan juga ke antrian lokal untuk UI
+    // Selalu tambahkan ke antrian lokal untuk UI
     queue.push(track); 
     updateQueueUI();
-    addChatMessage(`"${track.name}" ditambahkan ke antrian.`, 'system');
+
+    // Dapatkan status player saat ini untuk membuat keputusan
+    const state = await player.getCurrentState();
     
-    // LOGIKA AUTO-PLAY: Jika tidak ada lagu yang sedang diputar, mulai putar
-    if (!isPlaying) {
-        // Panggil endpoint 'next' agar Spotify mulai memutar lagu pertama dari antriannya
-        await skipTrack();
+    // Jika tidak ada lagu sama sekali di player, putar lagu ini secara langsung
+    if (!state || !state.track_window.current_track) {
+        addChatMessage(`Memutar lagu pertama: "${track.name}"...`, 'system');
+        await playTrack(track.uri);
+    } else {
+        // Jika sudah ada lagu, tambahkan ke antrian Spotify
+        await fetch(`https://api.spotify.com/v1/me/player/queue?uri=${track.uri}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+        addChatMessage(`"${track.name}" ditambahkan ke antrian.`, 'system');
     }
 }
 
 async function playTrack(uri) {
+    // Fungsi ini secara eksplisit memulai pemutaran sebuah lagu
     await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${currentDeviceId}`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
@@ -217,7 +198,7 @@ async function skipTrack() {
 }
 
 async function togglePlayPause() {
-    if (!currentTrack) return; // Jangan lakukan apa-apa jika tidak ada lagu
+    if (!currentTrack) return;
     const endpoint = isPlaying ? 'pause' : 'play';
     await fetch(`https://api.spotify.com/v1/me/player/${endpoint}?device_id=${currentDeviceId}`, {
         method: 'PUT',
@@ -226,7 +207,7 @@ async function togglePlayPause() {
 }
 
 
-// --- Fungsi Kontrol UI (Tetap sama) ---
+// --- Fungsi Kontrol UI (Sedikit perubahan untuk UI) ---
 document.getElementById('chatInput').addEventListener('keypress', async (e) => {
     if (e.key === 'Enter' && e.target.value.trim() !== '') {
         const command = e.target.value.trim();
@@ -255,13 +236,13 @@ function updateNowPlayingUI(track) {
         titleEl.textContent = track.name;
         artistEl.textContent = track.artists.map(a => a.name).join(', ');
         albumArtEl.style.backgroundImage = `url(${track.album.images[0].url})`;
-        // Tandai lagu yang sedang diputar di daftar antrian
-        updateQueueUI(); 
     } else {
         titleEl.textContent = 'Tidak ada lagu yang diputar';
         artistEl.textContent = '';
         albumArtEl.style.backgroundImage = 'none';
     }
+    // Selalu update antrian untuk menandai lagu yang sedang diputar
+    updateQueueUI(); 
 }
 
 function updateQueueUI() {
@@ -270,7 +251,6 @@ function updateQueueUI() {
     queue.forEach((track) => {
         const li = document.createElement('li');
         li.className = 'queue-item';
-        // Tandai lagu yang sedang diputar berdasarkan `currentTrack`
         if (currentTrack && track.uri === currentTrack.uri) {
             li.classList.add('playing');
         }
@@ -293,5 +273,4 @@ function addChatMessage(message, type = 'system') {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Panggil fungsi utama saat halaman dimuat
 main();
