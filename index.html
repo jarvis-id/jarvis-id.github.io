@@ -3,209 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Public Music Player</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: #ffffff; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; min-height: 100vh; box-sizing: border-box; }
-        .container { width: 100%; max-width: 800px; background-color: #1e1e1e; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); }
-        h1, h2, h3 { text-align: center; color: #FF0000; }
-        h3 { margin-top: 25px; color: #ccc; font-weight: normal; font-size: 1.1em; }
-        .player-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; border-radius: 8px; margin-bottom: 20px; }
-        .player-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        #placeholder { display: flex; justify-content: center; align-items: center; height: 100%; font-size: 1.2em; color: #888; }
-        .controls { display: flex; gap: 10px; margin-bottom: 20px; }
-        .input-field { flex-grow: 1; padding: 10px; border-radius: 5px; border: 1px solid #555; background-color: #333; color: #fff; font-size: 16px; }
-        #add-btn { padding: 10px 20px; border: none; border-radius: 5px; background-color: #FF0000; color: #ffffff; font-weight: bold; cursor: pointer; transition: background-color 0.3s; }
-        #add-btn:hover { background-color: #cc0000; }
-        #queue-list { list-style: none; padding: 0; }
-        #queue-list li { background-color: #282828; padding: 10px 15px; border-radius: 5px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        #queue-list li.playing { border-left: 4px solid #FF0000; font-weight: bold; }
-        .song-title { flex-grow: 1; }
-        footer { margin-top: 30px; color: #555; text-align: center; font-size: 0.9em; }
-    </style>
+    <title>JARVIS - Control Panel</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Public Music Player</h1>
-
-        <div class="player-wrapper">
-            <div id="player"><div id="placeholder">Pemutar video akan muncul di sini...</div></div>
+    <div class="chat-container">
+        <div id="chat-log" class="chat-log">
+            <!-- Pesan akan ditambahkan di sini oleh JavaScript -->
         </div>
-
-        <h3>Minta Lagu</h3>
-        <div class="controls">
-            <input type="text" id="song-input" class="input-field" placeholder="Ketik judul lagu dan artis...">
-            <button id="add-btn">Tambah</button>
+        <div id="status-bar" class="status-bar">
+            <!-- Status JARVIS akan ditampilkan di sini -->
         </div>
-
-        <h3>Perintah</h3>
-        <div class="controls">
-            <input type="text" id="command-input" class="input-field" placeholder="Ketik !skip untuk melewati lagu...">
-        </div>
-
-        <div class="queue-container">
-            <h2 id="queue-title">Antrian (0)</h2>
-            <ul id="queue-list"></ul>
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Ketik perintah untuk JARVIS..." autocomplete="off">
+            <button id="send-button">Kirim</button>
         </div>
     </div>
-    
-    <footer><p>Dibuat oleh <a href="https://github.com/jarvis-id" target="_blank" style="color:#888;">Jarvis-ID</a></p></footer>
-
-    <script>
-        // ======================================================================
-        // Kunci API Anda sudah benar di sini. JANGAN UBAH BAGIAN INI.
-        // ======================================================================
-        const YOUTUBE_API_KEY = 'AIzaSyBZnA2vpnWzYBfQWjgit222oJTPH-ChxQw';
-        // ======================================================================
-
-        var tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        var firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-        let player;
-        const songQueue = []; // Sekarang menyimpan objek {id, title}
-        let isApiReady = false;
-
-        function onYouTubeIframeAPIReady() {
-            isApiReady = true;
-        }
-
-        function createPlayer(videoId) {
-            document.getElementById('placeholder').style.display = 'none';
-            player = new YT.Player('player', {
-                height: '100%', width: '100%', videoId: videoId,
-                playerVars: { 'playsinline': 1, 'autoplay': 1, 'controls': 1 },
-                events: { 'onStateChange': onPlayerStateChange }
-            });
-        }
-        
-        function onPlayerStateChange(event) {
-            if (event.data === YT.PlayerState.ENDED) {
-                skipSong();
-            }
-        }
-
-        function skipSong() {
-            if (songQueue.length === 0) return;
-            songQueue.shift();
-            playNextSong();
-        }
-        
-        function playNextSong() {
-            updateQueueList();
-            if (songQueue.length > 0) {
-                const nextSongId = songQueue[0].id;
-                if (!player) {
-                    createPlayer(nextSongId);
-                } else {
-                    player.loadVideoById(nextSongId);
-                }
-            } else {
-                if (player) player.destroy();
-                player = null;
-                document.getElementById('placeholder').style.display = 'flex';
-            }
-        }
-
-        async function searchYouTube(query) {
-            // ==================================================================
-            // INI ADALAH BARIS YANG TELAH DIPERBAIKI
-            // Ia sekarang memeriksa teks placeholder, bukan kunci API Anda.
-            // ==================================================================
-            if (YOUTUBE_API_KEY === 'MASUKKAN_KUNCI_API_YOUTUBE_ANDA_DI_SINI') {
-                alert('Error: Kunci API YouTube belum dimasukkan ke dalam skrip.');
-                return null;
-            }
-            // ==================================================================
-
-            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}&type=video&maxResults=1`;
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                if (data.items && data.items.length > 0) {
-                    return {
-                        id: data.items[0].id.videoId,
-                        title: data.items[0].snippet.title
-                    };
-                }
-                return null;
-            } catch (error) {
-                console.error("Error saat mencari di YouTube:", error);
-                return null;
-            }
-        }
-
-        async function handleAddSong() {
-            if (!isApiReady) {
-                alert("API YouTube belum siap, silakan tunggu.");
-                return;
-            }
-            const songInput = document.getElementById('song-input');
-            const query = songInput.value.trim();
-            if (query === '') return;
-
-            songInput.disabled = true;
-            songInput.value = "Mencari...";
-
-            const songData = await searchYouTube(query);
-
-            songInput.disabled = false;
-            songInput.value = "";
-
-            if (songData) {
-                songQueue.push(songData);
-                updateQueueList();
-                if (songQueue.length === 1) {
-                    playNextSong();
-                }
-            } else {
-                alert('Lagu tidak ditemukan.');
-            }
-        }
-        
-        function updateQueueList() {
-            const queueList = document.getElementById('queue-list');
-            const queueTitle = document.getElementById('queue-title');
-            queueList.innerHTML = '';
-            queueTitle.textContent = `Antrian (${songQueue.length})`;
-
-            songQueue.forEach((song, index) => {
-                const li = document.createElement('li');
-                const titleSpan = document.createElement('span');
-                titleSpan.textContent = song.title;
-                titleSpan.className = 'song-title';
-                li.appendChild(titleSpan);
-
-                if (index === 0 && player) {
-                    li.classList.add('playing');
-                    titleSpan.textContent = `▶ ${song.title}`;
-                }
-                queueList.appendChild(li);
-            });
-        }
-
-        function handleCommand() {
-            const commandInput = document.getElementById('command-input');
-            const command = commandInput.value.trim().toLowerCase();
-
-            if (command === '!skip') {
-                if (songQueue.length > 0) {
-                    skipSong();
-                }
-            } else if (command !== '') {
-                alert('Perintah tidak dikenali. Gunakan !skip');
-            }
-            
-            commandInput.value = '';
-        }
-
-        document.getElementById('add-btn').addEventListener('click', handleAddSong);
-        document.getElementById('song-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleAddSong();
-        });
-        document.getElementById('command-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleCommand();
-        });
-    </script>
+    <script src="main.js"></script>
 </body>
 </html>
