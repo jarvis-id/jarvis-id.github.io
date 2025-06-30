@@ -1,5 +1,5 @@
 // Konfigurasi Utama
-const GEMINI_API_KEY = 'GANTI_DENGAN_API_KEY_GEMINI_ANDA';
+const GEMINI_API_KEY = 'AIzaSyAXNv4AuqfrnDwqnD7ZMc3v7WEDMiWZ_hQ';
 const BACKEND_SERVER_URL = 'http://localhost:5000/execute';
 
 // Elemen DOM
