@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengumuman Nobar AFF U23</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            margin-top: 0;
+            margin: 0;
+            height: 100vh; /* 100% tinggi viewport */
+            background-image: url("poster.png");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: white;
+            display: flex; /* Gunakan Flexbox */
+            flex-direction: column; /* Atur tata letak kolom */
+            justify-content: center; /* Pusatkan vertikal */
+            align-items: center; /* Pusatkan horizontal */
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin: 10px;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #3e8e41;
+        }
+
+        #backgroundMusic {
+            display: none; /* Sembunyikan Audio Player */
+        }
+
+        /* Media query untuk layar yang lebih kecil dari 600px */
+        @media (max-width: 600px) {
+            body {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="backgroundMusic" src="musik.mp3" autoplay loop></audio>
+
+    <script>
+        const backgroundMusic = document.getElementById("backgroundMusic");
+
+        let ttsTimer;
+
+        // Fungsi untuk memulai TTS dan Audio
+        function startAnnouncement() {
+            backgroundMusic.volume = 0.2; //Volume awal di set lebih kecil
+            backgroundMusic.play().catch(error => {
+                console.error("Autoplay dicegah oleh browser:", error);
+                alert("Browser mencegah pemutaran musik otomatis dengan suara. Silakan izinkan autoplay atau coba browser lain.");
+            });
+
+            ttsTimer = setTimeout(startTTS, 10000); //10000 ms = 10 detik
+        }
+
+        function startTTS() {
+            const announcementText = `Warga Suke yang kami cintai! Bersiaplah! Malam yang penuh semangat sudah menanti! FINAL AFF U23 - KITA DUKUNG GARUDA MUDA! Saksikan pertarungan sengit antara Indonesia melawan Vietnam! Jangan lewatkan Nobar FINAL AFF U23 yang super seru di Suke Highland! Tempat nongkrong paling asik dengan pemandangan yang bikin semangat! Sambil menikmati hidangan lezat dan minuman segar, mari kita dukung timnas Indonesia dengan sepenuh hati! Pastikan kalian catat tanggalnya! Dua puluh sembilan Juli, dua ribu dua puluh lima, pukul sembilan malam! AYO RAMAIKAN SUKE HIGHLAND! Berikan dukungan penuh untuk Garuda Muda! Kami ada di sini: https://maps.app.goo.gl/PTbg8qHzUnX2srqF9. Jangan lupa ajak semua teman dan keluarga! Semakin ramai, semakin membara! Bersama, kita raih KEMENANGAN! INDONESIA... BISA!!!`;
+
+            const synth = window.speechSynthesis;
+            let utterance = new SpeechSynthesisUtterance(announcementText);
+
+            // Set suara ke bahasa Indonesia
+            const voices = synth.getVoices();
+            let indonesianVoice = voices.find(voice => voice.lang === 'id-ID' || voice.name.toLowerCase().includes('indonesia'));
+
+            if (indonesianVoice) {
+                utterance.voice = indonesianVoice;
+                console.log("Suara Indonesia dipilih:", indonesianVoice.name);
+            } else {
+                console.warn("Suara Bahasa Indonesia tidak ditemukan. Menggunakan suara default.");
+                // Log semua suara yang tersedia
+                console.log("Suara yang tersedia:", voices.map(voice => voice.name + ' (' + voice.lang + ')').join(', '));
+            }
+
+            // Tambahkan sedikit jeda setelah setiap kalimat agar lebih jelas
+            utterance.onboundary = (event) => {
+                if (event.name === 'sentence') {
+                    setTimeout(() => {}, 200); // Jeda 200ms
+                }
+            };
+
+            //Atur kecepatan dan volume
+            utterance.rate = 1.2; // Kecepatan (1.0 adalah normal, >1 lebih cepat)
+            utterance.pitch = 1.1; // Atur nada (1.0 adalah normal, >1 lebih tinggi)
+
+            //Ketika TTS Mulai, kecilkan volume music
+            utterance.onstart = () => {
+                backgroundMusic.volume = 0.1; //Kurangi volume musik lebih rendah saat TTS berjalan
+            }
+
+            //Ketika TTS Selesai, Kembalikan volume music
+            utterance.onend = () => {
+                backgroundMusic.volume = 0.2; //Kembalikan volume musik sedikit lebih tinggi
+            }
+
+            synth.speak(utterance);
+        }
+
+        //Jalankan fungsi startAnnouncement setelah halaman di load
+        window.onload = startAnnouncement;
+
+        //Event listener diperlukan untuk mendapatkan daftar suara
+        window.speechSynthesis.onvoiceschanged = () => {
+            console.log("Daftar suara telah diperbarui.");
+        };
+    </script>
+</body>
+</html>
