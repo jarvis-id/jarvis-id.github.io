@@ -50,9 +50,11 @@
 </head>
 <body>
 
-    <audio id="backgroundMusic" src="musik.mp3" autoplay loop></audio>
+    <button id="startButton">Mulai Pengumuman</button>
+    <audio id="backgroundMusic" src="musik.mp3"></audio>
 
     <script>
+        const startButton = document.getElementById("startButton");
         const backgroundMusic = document.getElementById("backgroundMusic");
 
         let ttsTimer;
@@ -66,6 +68,7 @@
             });
 
             ttsTimer = setTimeout(startTTS, 10000); //10000 ms = 10 detik
+
         }
 
         function startTTS() {
@@ -111,8 +114,8 @@
             synth.speak(utterance);
         }
 
-        //Jalankan fungsi startAnnouncement setelah halaman di load
-        window.onload = startAnnouncement;
+        //Jalankan fungsi startAnnouncement setelah button diklik
+        startButton.addEventListener("click", startAnnouncement);
 
         //Event listener diperlukan untuk mendapatkan daftar suara
         window.speechSynthesis.onvoiceschanged = () => {
