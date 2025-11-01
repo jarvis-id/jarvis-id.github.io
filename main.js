@@ -1,4 +1,4 @@
-// main.js (Versi Final dengan Sinkronisasi Waktu Lokal)
+// main.js (Versi Final dengan Konteks Pengetahuan Waktu Nyata)
 
 // Elemen DOM
 const chatLog = document.getElementById('chat-log');
@@ -31,13 +31,10 @@ function addMessage(sender, text) {
     }
 }
 
-// ======================================================================
-// --- FUNGSI BARU UNTUK MENANGANI PERINTAH LOKAL ---
-// ======================================================================
+// Fungsi untuk menangani perintah lokal (tanggal, waktu)
 function handleLocalCommands(text) {
     const lowerCaseText = text.toLowerCase();
 
-    // Cek kata kunci untuk tanggal dan waktu
     if (lowerCaseText.includes('tanggal') || lowerCaseText.includes('hari ini') || lowerCaseText.includes('jam berapa') || lowerCaseText.includes('waktu')) {
         const now = new Date();
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -46,12 +43,11 @@ function handleLocalCommands(text) {
 
         const response = `Tentu, menurut jam sistem saya, sekarang adalah hari ${formattedDate}, pukul ${formattedTime}.`;
         addMessage('jarvis', response);
-        return true; // Mengindikasikan bahwa perintah telah ditangani
+        return true;
     }
 
-    return false; // Perintah tidak cocok, lanjutkan ke AI
+    return false;
 }
-
 
 // Fungsi utama untuk menangani input pengguna (TELAH DIPERBARUI)
 async function handleUserInput() {
@@ -61,14 +57,12 @@ async function handleUserInput() {
     addMessage('user', userText);
     userInput.value = '';
 
-    // --- LOGIKA BARU: Cek perintah lokal terlebih dahulu ---
     const commandHandled = handleLocalCommands(userText);
     if (commandHandled) {
         statusBar.textContent = 'Siap menerima perintah.';
-        return; // Hentikan eksekusi jika perintah sudah ditangani secara lokal
+        return;
     }
 
-    // Jika bukan perintah lokal, lanjutkan ke Google AI
     const model = geminiModelInput.value;
     const apiKey = apiKeyInput.value.trim();
 
@@ -79,12 +73,23 @@ async function handleUserInput() {
 
     statusBar.textContent = 'Menghubungi Google AI...';
 
+    // --- PERUBAHAN UTAMA: Menambahkan Konteks Waktu ---
+    const now = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const currentDate = now.toLocaleDateString('id-ID', options);
+    
+    // Gabungkan konteks dengan pertanyaan pengguna
+    const finalPrompt = `Konteks: Tanggal saat ini adalah ${currentDate}. Jawab pertanyaan berikut berdasarkan konteks tanggal ini. Pertanyaan: ${userText}`;
+    
+    console.log("Prompt yang dikirim ke AI:", finalPrompt); // Untuk debugging
+
     const API_URL = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
 
     const requestBody = {
         contents: [{
             parts: [{
-                text: userText
+                // Gunakan prompt yang sudah diberi konteks
+                text: finalPrompt
             }]
         }]
     };
