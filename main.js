@@ -1,6 +1,4 @@
-// main.js (Versi Client-Side untuk GitHub Pages)
-
-// --- TIDAK ADA LAGI BACKEND_URL ---
+// main.js (Versi Client-Side untuk GitHub Pages - DIPERBAIKI)
 
 // Elemen DOM
 const chatLog = document.getElementById('chat-log');
@@ -33,7 +31,7 @@ function addMessage(sender, text) {
     }
 }
 
-// --- FUNGSI UTAMA DIMODIFIKASI SECARA SIGNIFIKAN ---
+// Fungsi utama yang telah diperbaiki
 async function handleUserInput() {
     const userText = userInput.value.trim();
     const model = geminiModelInput.value;
@@ -50,8 +48,9 @@ async function handleUserInput() {
     userInput.value = '';
     statusBar.textContent = 'Menghubungi Google AI...';
 
-    // URL endpoint untuk Google AI Gemini REST API
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    // === PERUBAHAN DI SINI ===
+    // URL endpoint diubah dari v1beta menjadi v1 untuk mendukung model terbaru
+    const API_URL = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
 
     // Struktur body request yang dibutuhkan oleh Google AI API
     const requestBody = {
@@ -71,20 +70,22 @@ async function handleUserInput() {
             body: JSON.stringify(requestBody)
         });
 
-        if (!response.ok) {
-            const errorResult = await response.json();
-            throw new Error(`Google AI merespons dengan error! Status: ${response.status}. Pesan: ${errorResult.error.message}`);
-        }
+        const result = await response.json(); // Baca respons JSON di awal
 
-        const result = await response.json();
+        if (!response.ok) {
+            // Jika ada error, tampilkan pesan dari respons API
+            const errorMessage = result.error?.message || `Status: ${response.status}`;
+            throw new Error(`Google AI merespons dengan error! ${errorMessage}`);
+        }
         
         // Ekstrak teks dari struktur respons Google AI
-        const jarvisText = result.candidates[0].content.parts[0].text;
+        // Ditambahkan pengecekan untuk mencegah error jika respons tidak sesuai format
+        const jarvisText = result.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, saya tidak menerima respons yang valid.";
         addMessage('jarvis', jarvisText);
 
     } catch (error) {
         console.error('Gagal terhubung ke Google AI:', error);
-        addMessage('jarvis', `Error: Tidak dapat terhubung ke Google AI. Pastikan API Key valid dan coba lagi.\n\nDetail: ${error.message}`);
+        addMessage('jarvis', `Error: Tidak dapat terhubung ke Google AI.\n\nDetail: ${error.message}`);
     }
     statusBar.textContent = 'Siap menerima perintah.';
 }
