@@ -1,4 +1,4 @@
-// main.js (Versi Final untuk GitHub Pages)
+// main.js (Versi Final dengan Sinkronisasi Waktu Lokal)
 
 // Elemen DOM
 const chatLog = document.getElementById('chat-log');
@@ -31,24 +31,54 @@ function addMessage(sender, text) {
     }
 }
 
-// Fungsi utama untuk menangani input pengguna
+// ======================================================================
+// --- FUNGSI BARU UNTUK MENANGANI PERINTAH LOKAL ---
+// ======================================================================
+function handleLocalCommands(text) {
+    const lowerCaseText = text.toLowerCase();
+
+    // Cek kata kunci untuk tanggal dan waktu
+    if (lowerCaseText.includes('tanggal') || lowerCaseText.includes('hari ini') || lowerCaseText.includes('jam berapa') || lowerCaseText.includes('waktu')) {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const formattedDate = now.toLocaleDateString('id-ID', options);
+        const formattedTime = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+        const response = `Tentu, menurut jam sistem saya, sekarang adalah hari ${formattedDate}, pukul ${formattedTime}.`;
+        addMessage('jarvis', response);
+        return true; // Mengindikasikan bahwa perintah telah ditangani
+    }
+
+    return false; // Perintah tidak cocok, lanjutkan ke AI
+}
+
+
+// Fungsi utama untuk menangani input pengguna (TELAH DIPERBARUI)
 async function handleUserInput() {
     const userText = userInput.value.trim();
+    if (userText === '') return;
+
+    addMessage('user', userText);
+    userInput.value = '';
+
+    // --- LOGIKA BARU: Cek perintah lokal terlebih dahulu ---
+    const commandHandled = handleLocalCommands(userText);
+    if (commandHandled) {
+        statusBar.textContent = 'Siap menerima perintah.';
+        return; // Hentikan eksekusi jika perintah sudah ditangani secara lokal
+    }
+
+    // Jika bukan perintah lokal, lanjutkan ke Google AI
     const model = geminiModelInput.value;
     const apiKey = apiKeyInput.value.trim();
-
-    if (userText === '') return;
 
     if (model === '' || apiKey === '') {
         addMessage('jarvis', 'Error: Silakan pilih Model AI dan masukkan API Key Anda terlebih dahulu.');
         return;
     }
 
-    addMessage('user', userText);
-    userInput.value = '';
     statusBar.textContent = 'Menghubungi Google AI...';
 
-    // URL endpoint yang benar menggunakan v1 untuk mendukung model terbaru
     const API_URL = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
 
     const requestBody = {
@@ -62,9 +92,7 @@ async function handleUserInput() {
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)
         });
 
