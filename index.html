@@ -8,6 +8,17 @@
 </head>
 <body>
     <div class="chat-container">
+        <div class="settings-area">
+            <select id="gemini-model">
+                <option value="gemini-1.5-flash-latest" selected>Gemini 1.5 Flash (Cepat & Efisien)</option>
+                <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro (Paling Canggih)</option>
+                <option value="gemini-1.0-pro">Gemini 1.0 Pro (Model Stabil)</option>
+                <option value="gemini-pro-vision">Gemini Pro Vision (Untuk Analisis Gambar)</option>
+            </select>
+            
+            <input type="password" id="api-key" placeholder="Masukkan Google AI API Key Anda">
+        </div>
+        
         <div id="chat-log" class="chat-log">
             <!-- Pesan akan ditambahkan di sini oleh JavaScript -->
         </div>
