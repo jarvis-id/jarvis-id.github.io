@@ -1,4 +1,4 @@
-// main.js (Versi Client-Side untuk GitHub Pages - DIPERBAIKI)
+// main.js (Versi Final untuk GitHub Pages)
 
 // Elemen DOM
 const chatLog = document.getElementById('chat-log');
@@ -8,7 +8,7 @@ const statusBar = document.getElementById('status-bar');
 const geminiModelInput = document.getElementById('gemini-model');
 const apiKeyInput = document.getElementById('api-key');
 
-// Fungsi untuk Text-to-Speech (tetap sama)
+// Fungsi untuk Text-to-Speech
 function speak(text) {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
@@ -17,7 +17,7 @@ function speak(text) {
     window.speechSynthesis.speak(utterance);
 }
 
-// Fungsi untuk menambah pesan ke log (tetap sama)
+// Fungsi untuk menambah pesan ke log
 function addMessage(sender, text) {
     const messageElement = document.createElement('div');
     messageElement.classList.add('message', sender);
@@ -31,7 +31,7 @@ function addMessage(sender, text) {
     }
 }
 
-// Fungsi utama yang telah diperbaiki
+// Fungsi utama untuk menangani input pengguna
 async function handleUserInput() {
     const userText = userInput.value.trim();
     const model = geminiModelInput.value;
@@ -48,11 +48,9 @@ async function handleUserInput() {
     userInput.value = '';
     statusBar.textContent = 'Menghubungi Google AI...';
 
-    // === PERUBAHAN DI SINI ===
-    // URL endpoint diubah dari v1beta menjadi v1 untuk mendukung model terbaru
+    // URL endpoint yang benar menggunakan v1 untuk mendukung model terbaru
     const API_URL = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
 
-    // Struktur body request yang dibutuhkan oleh Google AI API
     const requestBody = {
         contents: [{
             parts: [{
@@ -70,17 +68,14 @@ async function handleUserInput() {
             body: JSON.stringify(requestBody)
         });
 
-        const result = await response.json(); // Baca respons JSON di awal
+        const result = await response.json();
 
         if (!response.ok) {
-            // Jika ada error, tampilkan pesan dari respons API
-            const errorMessage = result.error?.message || `Status: ${response.status}`;
+            const errorMessage = result.error?.message || `Respons tidak valid dengan Status: ${response.status}`;
             throw new Error(`Google AI merespons dengan error! ${errorMessage}`);
         }
         
-        // Ekstrak teks dari struktur respons Google AI
-        // Ditambahkan pengecekan untuk mencegah error jika respons tidak sesuai format
-        const jarvisText = result.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, saya tidak menerima respons yang valid.";
+        const jarvisText = result.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, saya tidak menerima respons yang valid dari AI.";
         addMessage('jarvis', jarvisText);
 
     } catch (error) {
@@ -90,11 +85,11 @@ async function handleUserInput() {
     statusBar.textContent = 'Siap menerima perintah.';
 }
 
-// Event Listeners (tetap sama)
+// Event Listeners
 sendButton.addEventListener('click', handleUserInput);
 userInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') handleUserInput(); });
 
-// Pesan selamat datang (tetap sama)
+// Pesan selamat datang
 window.onload = () => {
     addMessage('jarvis', 'Selamat datang. Saya JARVIS. Silakan pilih model, masukkan API Key, lalu berikan perintah Anda.');
     statusBar.textContent = 'Siap menerima perintah.';
