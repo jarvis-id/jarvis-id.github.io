@@ -2,41 +2,185 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS - Control Panel</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LapDok - Dokumentasi Kinerja Digital</title>
+    
+    <!-- Google AdSense Auto Ads -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2642522351768171" crossorigin="anonymous"></script>
 
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2642522351768171"
-     crossorigin="anonymous"></script>
+    <!-- PWA Setup -->
+    <link rel="manifest" href="assets/manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+
+    <!-- Script Jarvis & Counter -->
+    <script src="js/jarvis.js"></script>
+    <script src="js/realtime-counter.js"></script>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: #f4f7f6; 
+            color: #333; 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar { 
+            display: flex; 
+            justify-content: space-around; 
+            background: #2c3e50; 
+            padding: 15px 0; 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+        }
+        .navbar a { color: white; text-decoration: none; font-weight: bold; font-size: 14px; opacity: 0.8; }
+        .navbar a.active { opacity: 1; border-bottom: 2px solid #3498db; }
+
+        header { padding: 30px 20px; text-align: center; background: #34495e; color: white; }
+        header h1 { font-size: 28px; letter-spacing: 1px; }
+
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            gap: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Ad Slot Styling */
+        .ad-placeholder { width: 100%; min-height: 100px; background: #eee; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 10px; color: #999; text-transform: uppercase; }
+
+        .action-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px 20px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e1e8ed;
+        }
+        
+        .jarvis-icon { font-size: 50px; margin-bottom: 15px; }
+        .action-card h2 { font-size: 20px; margin-bottom: 10px; color: #2c3e50; }
+        .action-card p { font-size: 14px; color: #666; margin-bottom: 25px; line-height: 1.6; }
+
+        .btn-start {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 18px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+        }
+
+        /* SEO CONTENT SECTION */
+        .seo-section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e1e8ed;
+            text-align: left;
+        }
+        .seo-section h3 { font-size: 18px; color: #2c3e50; margin-bottom: 10px; }
+        .seo-section p { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 15px; }
+
+        .footer-nav { margin-top: 20px; padding: 20px; text-align: center; font-size: 13px; }
+        .footer-nav a { color: #3498db; text-decoration: none; margin: 0 10px; }
+
+        .live-card {
+            background: #fff;
+            border: 1px solid #e1e8ed;
+            border-radius: 12px;
+            padding: 15px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .pulse { width: 10px; height: 10px; background: #2ecc71; border-radius: 50%; display: inline-block; margin-right: 8px; animation: blink 2s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+    </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="settings-area">
-            <!-- Dropdown telah diperbarui dengan model terbaru sebagai default -->
-            <select id="gemini-model">
-                <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Cepat & Efisien)</option>
-                <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro (Paling Canggih)</option>
-                <option value="gemini-1.0-pro">Gemini 1.0 Pro (Model Stabil)</option>
-                <!-- Opsi "gemini-pro-vision" sengaja dihilangkan karena memerlukan format input yang berbeda (gambar+teks)
-                     dan akan menyebabkan error jika digunakan dengan script saat ini yang hanya mengirim teks. -->
-            </select>
-            
-            <input type="password" id="api-key" placeholder="Masukkan Google AI API Key Anda">
-        </div>
+
+    <nav class="navbar">
+        <a href="index.html" class="active">🏠 Beranda</a>
+        <a href="pages/form.html">📝 Input Data</a>
+        <a href="pages/tampildata.html">📂 Arsip</a>
+    </nav>
+
+    <header>
+        <h1>LapDok</h1>
+        <p>Asisten Dokumentasi Kinerja Pegawai</p>
+    </header>
+
+    <div class="main-content">
         
-        <div id="chat-log" class="chat-log">
-            <!-- Pesan akan ditambahkan di sini oleh JavaScript -->
+        <!-- Iklan Atas -->
+        <div class="ad-placeholder">
+            <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2642522351768171" data-ad-slot="7918954512" data-ad-format="auto" data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
         </div>
-        <div id="status-bar" class="status-bar">
-            <!-- Status JARVIS akan ditampilkan di sini -->
+
+        <div class="action-card">
+            <div class="jarvis-icon">🎙️</div>
+            <h2 id="home-status">Pemandu Suara Siap</h2>
+            <p id="home-desc">Ketuk tombol di bawah untuk mengaktifkan <b>Jarvis</b> yang akan memandu pengisian laporan Anda secara interaktif.</p>
+            <button class="btn-start" id="btn-main-action" onclick="initializeHome()">🚀 Aktifkan & Mulai</button>
         </div>
-        <div class="input-area">
-            <input type="text" id="user-input" placeholder="Ketik perintah untuk JARVIS..." autocomplete="off">
-            <button id="send-button">Kirim</button>
+
+        <!-- SEO SECTION: Memberi makan robot Google AdSense -->
+        <div class="seo-section">
+            <h3>Solusi Dokumentasi Kinerja Modern</h3>
+            <p>LapDok adalah aplikasi inovatif yang dirancang untuk membantu para pegawai dalam menyusun laporan kinerja harian secara otomatis. Kami memahami tantangan administrasi di lapangan, itulah sebabnya kami mengintegrasikan teknologi <b>Asisten Suara</b> dan <b>Auto-Watermark GPS</b>.</p>
+            
+            <h3>Mengapa Memilih LapDok?</h3>
+            <p>Setiap foto yang Anda ambil melalui aplikasi ini akan secara otomatis ditanamkan koordinat lokasi presisi, waktu terkini, dan alamat lengkap. Hasil laporan dapat langsung diekspor ke format <b>PDF standar A4</b> yang rapi dan siap cetak.</p>
+        </div>
+
+        <div class="live-card">
+            <div><span class="pulse"></span><span style="font-size: 12px; font-weight: bold; color: #7f8c8d;">SISTEM ONLINE</span></div>
+            <div style="font-size: 14px;">Perangkat Aktif: <b id="active-devices">1</b></div>
+        </div>
+
+        <!-- Footer Links untuk AdSense -->
+        <div class="footer-nav">
+            <a href="pages/about.html">Tentang Kami</a> | 
+            <a href="pages/guide.html">Panduan</a> | 
+            <a href="pages/privacy.html">Kebijakan Privasi</a>
+            <p style="margin-top: 15px; font-size: 10px; color: #bdc3c7;">© 2024 Jarvis ID - LapDok System</p>
         </div>
     </div>
-    <script src="main.js"></script>
+
+    <script>
+        let isActivated = false;
+        function initializeHome() {
+            if (!isActivated) {
+                if(typeof Jarvis !== 'undefined') {
+                    Jarvis.activate();
+                    Jarvis.say("Halo! Selamat datang di aplikasi Lap Dok. Saya Jarvis, siap memandu laporan Anda.");
+                }
+                document.getElementById('home-status').innerText = "Sistem Aktif";
+                document.getElementById('home-desc').innerText = "Jarvis siap memandu. Silakan lanjut ke pengisian form.";
+                document.getElementById('btn-main-action').innerText = "📝 Mulai Isi Laporan";
+                document.getElementById('btn-main-action').style.background = "#2ecc71";
+                isActivated = true;
+            } else {
+                window.location.href = "pages/form.html";
+            }
+        }
+    </script>
 </body>
 </html>
-
-
