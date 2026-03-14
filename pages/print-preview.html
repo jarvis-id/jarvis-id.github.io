@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Laporan Kinerja</title>
+    <link rel="stylesheet" href="../css/print-pdf.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { background: #525659; margin: 0; padding-top: 60px; }
+        .preview-toolbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: #34495e;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 10000;
+        }
+        .toolbar-title { color: white; font-weight: bold; font-size: 16px; }
+        .toolbar-btns { display: flex; gap: 10px; }
+        .btn-prev {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+        .btn-back { background: #95a5a6; color: white; }
+        .btn-download-now { background: #27ae60; color: white; }
+        .btn-prev:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        /* Sembunyikan toolbar saat memproses PDF */
+        @media print { .preview-toolbar { display: none; } }
+    </style>
+</head>
+<body>
+
+<div class="preview-toolbar" id="toolbar">
+    <div class="toolbar-title">Pratinjau Dokumen</div>
+    <div class="toolbar-btns">
+        <button class="btn-prev btn-back" onclick="window.history.back()">⬅️ Kembali</button>
+        <button class="btn-prev btn-download-now" onclick="downloadPDF()">💾 Download PDF Sekarang</button>
+    </div>
+</div>
+
+<div id="print-content-target">
+    <!-- Konten akan di-inject oleh JS di bawah -->
+    <div style="text-align:center; color:white; padding:50px;">Memuat pratinjau...</div>
+</div>
+
+<script>
+async function loadPreview() {
+    const selectedIds = JSON.parse(sessionStorage.getItem('selected_print_ids') || '[]');
+    if (selectedIds.length === 0) {
+        alert("Tidak ada data yang dipilih.");
+        window.location.href = "tampildata.html";
+        return;
+    }
+
+    const allHistory = JSON.parse(localStorage.getItem('lapdok_history') || '[]');
+    const reports = allHistory.filter(h => selectedIds.includes(h.id));
+    const target = document.getElementById('print-content-target');
+    target.innerHTML = '';
+    
+    let allItems = [];
+    reports.forEach(r => r.data.forEach(d => allItems.push(d)));
+    allItems.sort((a, b) => new Date(a.workDate) - new Date(b.workDate));
+
+    const itemsPerPage = 3;
+    const totalPages = Math.ceil(allItems.length / itemsPerPage);
+
+    for (let i = 0; i < allItems.length; i += itemsPerPage) {
+        const page = document.createElement('div');
+        page.className = 'page-container';
+        const chunk = allItems.slice(i, i + itemsPerPage);
+        
+        let html = `
+            <div class="print-main-header">
+                <h1>DOKUMENTASI LAPORAN KINERJA</h1>
+            </div>`;
+        
+        chunk.forEach((item, idx) => {
+            html += `
+            <div class="print-job-item">
+                <div class="print-meta-location"><strong>LOKASI:</strong> ${item.addr}</div>
+                <div class="print-grid">
+                    <div class="print-col">
+                        <div class="print-lbl">SEBELUM</div>
+                        <div class="print-img-box">${item.p1 ? `<img src="${item.p1}">` : 'No Photo'}</div>
+                    </div>
+                    <div class="print-col">
+                        <div class="print-lbl">PROSES</div>
+                        <div class="print-img-box">${item.p2 ? `<img src="${item.p2}">` : 'No Photo'}</div>
+                    </div>
+                    <div class="print-col">
+                        <div class="print-lbl">SESUDAH</div>
+                        <div class="print-img-box">${item.p3 ? `<img src="${item.p3}">` : 'No Photo'}</div>
+                    </div>
+                </div>
+                <div class="print-desc"><strong>KETERANGAN:</strong> ${item.desc}</div>
+            </div>`;
+        });
+        
+        html += `<div class="print-footer-page">Halaman ${Math.floor(i/itemsPerPage) + 1} dari ${totalPages}</div>`;
+        page.innerHTML = html;
+        target.appendChild(page);
+    }
+}
+
+async function downloadPDF() {
+    const defaultName = "Laporan_Kinerja_" + new Date().toISOString().slice(0, 10);
+    let fileName = prompt("Masukkan nama file PDF:", defaultName);
+    if (fileName === null) return; 
+    if (!fileName.toLowerCase().endsWith('.pdf')) fileName += '.pdf';
+
+    const element = document.getElementById('print-content-target');
+    const toolbar = document.getElementById('toolbar');
+    
+    // Sembunyikan toolbar secara paksa
+    toolbar.style.display = 'none';
+    document.body.style.paddingTop = '0';
+
+    const opt = {
+        margin: [0, 0, 0, 0],
+        filename: fileName,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 2, 
+            windowWidth: 800, 
+            useCORS: true,
+            letterRendering: true
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] }
+    };
+
+    try {
+        await html2pdf().set(opt).from(element).save();
+    } catch (e) {
+        console.error(e);
+        alert("Gagal mengunduh PDF.");
+    } finally {
+        toolbar.style.display = 'flex';
+        document.body.style.paddingTop = '60px';
+    }
+}
+
+window.onload = loadPreview;
+</script>
+</body>
+</html>

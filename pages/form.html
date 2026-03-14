@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Input Laporan - DokKiner</title>
+    
+    <link rel="manifest" href="../assets/manifest.json">
+    <meta name="theme-color" content="#34495e">
+
+    <!-- Leaflet JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Script & Style -->
+    <link rel="stylesheet" href="../css/form.css">
+    <script src="../js/jarvis.js"></script>
+    <script src="../js/realtime-counter.js"></script>
+    <script defer src="../js/form-handler.js"></script>
+
+    <!-- External styles linked above -->
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="../index.html">🏠 Home</a>
+    <a href="form.html" class="active">📝 Form Input</a>
+    <a href="tampildata.html">📂 Riwayat Laporan</a>
+</nav>
+
+<div class="container">
+    <div id="edit-banner">
+        ⚠️ MODE EDIT: Perubahan akan menimpa data lama. <br> 
+        <button onclick="cancelEdit()" style="margin-top:5px; padding:5px; cursor:pointer;">Batal Edit</button>
+    </div>
+    <div id="job-container"></div>
+    <div class="actions">
+        <button class="btn-add" onclick="addNewJobItem()">+ Tambah Item Pekerjaan</button>
+        <button class="btn-save" onclick="saveToHistory()">💾 Simpan ke Riwayat</button>
+    </div>
+</div>
+
+<!-- (Modal HTML tetap sama seperti sebelumnya...) -->
+<div id="map-modal">
+    <div class="modal-content">
+        <div style="position: relative;">
+            <div id="map-container"></div>
+            <div class="map-controls">
+                <button class="btn-locate" onclick="getCurrentLocation()">🎯</button>
+            </div>
+        </div>
+        <div style="padding:15px; display:flex; justify-content: space-between; align-items: center;">
+            <span id="map-status" style="font-size:10px; color:#e67e22;"></span>
+            <div>
+                <button onclick="closeMap()" style="padding:10px;">Batal</button>
+                <button onclick="confirmLocation()" style="padding:10px; background:#27ae60; color:white; border:none; border-radius:4px;">Pilih Lokasi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="cam-modal">
+    <video id="cam-video" autoplay playsinline muted></video>
+        <div id="cam-overlay" style="display: none;">
+            <div class="tm-flex">
+                <div class="tm-time" id="val-time"></div>
+                <div class="tm-line"></div>
+                <div class="tm-date-col">
+                    <div class="tm-date" id="val-date"></div>
+                    <div class="tm-day" id="val-day"></div>
+                </div>
+            </div>
+            <div class="tm-info" id="val-gps"></div>
+            <div class="tm-info" id="val-addr"></div>
+        </div>
+    <div class="cam-controls">
+        <button onclick="closeCamera()" style="color:white; background:none; border:none;">Batal</button>
+        <button class="btn-shutter" onclick="capturePhoto()"></button>
+        <div style="width:40px;"></div>
+    </div>
+</div>
+
+<!-- External JavaScript linked above in <head> -->
+
+<button id="btn-mute-toggle" onclick="Jarvis.toggleMute()">🔇 Matikan Suara</button>
+
+</body>
+</html>
