@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Barang Koperasi</title>
+    <!-- Library Resmi Telegram WebApp -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--tg-theme-bg-color, #ffffff);
+        color: var(--tg-theme-text-color, #000000);
+        padding: 15px;
+        text-align: center;
+      }
+      .btn {
+        background-color: var(--tg-theme-button-color, #2481cc);
+        color: var(--tg-theme-button-text-color, #ffffff);
+        border: none;
+        padding: 12px;
+        font-size: 15px;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 100%;
+        margin-bottom: 15px;
+      }
+      .btn-scan {
+        background-color: #31b131;
+      }
+      .input-group {
+        margin: 12px 0;
+        text-align: left;
+      }
+      label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+        font-size: 14px;
+      }
+      input {
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+        color: var(--tg-theme-text-color, #000000);
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Form Input Barang Masuk</h3>
+    
+    <!-- Tombol untuk memicu kamera bawaan Telegram -->
+    <button class="btn btn-scan" id="btnScan">📷 Scan Barcode Barang</button>
+    
+    <div class="input-group">
+      <label>Barcode Produk:</label>
+      <input type="text" id="barcode" readonly placeholder="Hasil scan akan muncul di sini">
+    </div>
+    
+    <div class="input-group">
+      <label>Nama Barang:</label>
+      <input type="text" id="namaBarang" placeholder="Contoh: Tenda Camping">
+    </div>
+    
+    <div class="input-group">
+      <label>Stok Baru:</label>
+      <input type="number" id="stok" placeholder="Contoh: 10">
+    </div>
+    
+    <div class="input-group">
+      <label>Harga:</label>
+      <input type="number" id="harga" placeholder="Contoh: 150000">
+    </div>
+    
+    <button class="btn" id="btnKirim">Kirim ke Sistem</button>
+
+    <script>
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      tg.expand(); // Membuka aplikasi secara layar penuh
+
+      const btnScan = document.getElementById('btnScan');
+      const barcodeInput = document.getElementById('barcode');
+      const btnKirim = document.getElementById('btnKirim');
+
+      // Membuka kamera pemindai bawaan Telegram
+      btnScan.addEventListener('click', () => {
+        tg.showScanQrPopup({
+          text: "Arahkan kamera HP Anda ke Barcode Produk"
+        }, function(text) {
+          barcodeInput.value = text;
+          tg.closeScanQrPopup(); // Menutup kamera otomatis setelah terdeteksi
+          return true;
+        });
+      });
+
+      // Mengirimkan data kembali ke Bot Telegram
+      btnKirim.addEventListener('click', () => {
+        const barcode = barcodeInput.value;
+        const nama = document.getElementById('namaBarang').value;
+        const stok = document.getElementById('stok').value;
+        const harga = document.getElementById('harga').value;
+
+        if (!barcode || !nama || !stok || !harga) {
+          alert("Harap isi semua kolom termasuk memindai barcode terlebih dahulu.");
+          return;
+        }
+
+        // Menyusun format teks yang akan dikirim otomatis ke ruang obrolan bot Anda
+        const commandText = `/barangmasuk#${barcode}#${nama}#${stok}#${harga}`;
+        
+        tg.sendData(commandText); // Mengirim pesan teks otomatis ke chat bot
+        tg.close(); // Menutup Mini App
+      });
+    </script>
+  </body>
+</html>
